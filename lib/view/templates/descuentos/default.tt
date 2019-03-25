@@ -1,0 +1,60 @@
+[% INCLUDE include/header/main.tt %]
+[% INCLUDE include/configuracion/menu.tt %]
+[% INCLUDE include/descuentos/upsert.tt %]
+
+[% IF data.discounts.size %]
+
+<div class="col-sm-12">
+        <div class="card">
+                <div class="card-status bg-blue"></div>
+                <div class="card-header">
+                        <h3 class="card-title">Descuentos</h3>
+                </div>
+                [% IF data.charts.daily_discounts %]
+                        <div id="DIV-DAILY-DISCOUNT-CHART" style="height:10rem;max-height:160px;position:relative;" class="c3"></div>
+                        [% data.charts.daily_discounts %]
+                [% END %]
+                <div class="table-responsive">
+                        <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                <thead>
+                                        <tr>
+                                                <th class="w-1"></th>
+                                                <th>Nombre</th>
+                                                <th>Descuento</th>
+                                                <th>Meses</th>
+                                                <th>Tipo de descuento</th>
+                                        </tr>
+                                </thead>
+                                <tbody>
+                                        [% FOREACH dd = data.discounts %]
+                                        <tr>
+                                                <td class="w-1">[% loop.count %].</td>
+                                                <td [% IF !dd.active %]style="text-decoration:line-through" class="text-muted"[% END %]>
+                                                        <a href="[% ttf.uri( c => 'descuentos', m => 'ver', id => dd.id ) %]" class="text-inherit">
+                                                                [% dd.name %]
+                                                        </a>
+                                                </td>
+                                                <td>- $[% ttf.commify(dd.amount) %]</td>
+                                                <td>[% dd.discount_month_duration %]</td>
+                                                <td>
+                                                        [% dd.display_type_code %]
+                                                        [% IF dd.type_code == 'M' %]
+                                                                <div class="small text-muted">
+                                                                        [% dd.display_requirement_type_code %]
+                                                                        [% IF dd.requirement_type_code == 'S' %]
+                                                                                : [% dd.display_participating_memberships %]
+                                                                        [% END %]
+                                                                </div>
+                                                        [% END %]
+                                                </td>
+                                        </tr>
+                                        [% END %]
+                                </tbody>
+                        </table>
+                </div>
+        </div>
+</div>
+
+[% END %]
+
+[% INCLUDE include/footer.tt %]

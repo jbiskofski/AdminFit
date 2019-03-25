@@ -1,0 +1,65 @@
+[% INCLUDE include/header/main.tt %]
+
+<div class="col-sm-8">
+        <div class="card">
+                <div class="card-status bg-blue"></div>
+                <div class="card-header">
+                        <h3 class="card-title">[% data.calendar.display_month %] &raquo; [% data.calendar.year %]</h3>
+                        <div class="card-options">
+                                <a href="[% ttf.uri( c => 'wods', m => 'mes', month => data.prev_next.prev.month, year => data.prev_next.prev.year) %]" class="btn btn-secondary btn-sm">
+                                        [% ttf.tip(data.prev_next.prev.display_month, icon => 'arrow-left', color => 'gray') %]
+                                </a>
+                                &nbsp;
+                                <a href="[% ttf.uri( c => 'wods', m => 'mes', month => data.prev_next.next.month, year => data.prev_next.next.year) %]" class="btn btn-secondary btn-sm">
+                                        [% ttf.tip(data.prev_next.next.display_month, icon => 'arrow-right', color => 'gray') %]
+                                </a>
+                        </div>
+                </div>
+                <div class="card-body">
+                        <div class="table-responsive push">
+                                <table class="table table-bordered">
+                                        <thead>
+                                                <tr>
+                                                        <th width="14%" style="border-top:solid 1px #dee2e6">Dom</th>
+                                                        <th width="14%" style="border-top:solid 1px #dee2e6">Lun</th>
+                                                        <th width="14%" style="border-top:solid 1px #dee2e6">Mar</th>
+                                                        <th width="14%" style="border-top:solid 1px #dee2e6">Mie</th>
+                                                        <th width="14%" style="border-top:solid 1px #dee2e6">Jue</th>
+                                                        <th width="14%" style="border-top:solid 1px #dee2e6">Vie</th>
+                                                        <th width="14%" style="border-top:solid 1px #dee2e6">Sab</th>
+                                                </tr>
+                                        </thead>
+                                        <tbody>
+                                                [% FOREACH week = data.calendar.weeks %]
+                                                        <tr>
+                                                                [% FOREACH day = week %]
+                                                                        <td width="14%" class="table-calendar-day">
+                                                                                [% IF day.day %]
+                                                                                        <div class="calendar-day-label">
+                                                                                                [% day.day %]
+                                                                                        </div>
+                                                                                        <div class="calendar-day-data">
+                                                                                                [% IF day.data.wod_count %]
+                                                                                                        [% IF day.data.wod_count == 1 %]
+                                                                                                                <i class="fa fa-dumbbell text-blue"></i>
+                                                                                                        [% ELSE %]
+                                                                                                                <div class="tag" style="margin-bottom:4px">
+                                                                                                                        [% day.data.wod_count %]
+                                                                                                                        <span class="tag-addon"><i class="fa fa-dumbbell text-blue"></i></span>
+                                                                                                                </div>
+                                                                                                        [% END %]
+                                                                                                [% END %]
+                                                                                        </div>
+                                                                                [% END %]
+                                                                        </td>
+                                                                [% END %]
+                                                        </tr>
+                                                [% END %]
+                                        </tbody>
+                                </table>
+                        </div>
+                </div>
+        </div>
+</div>
+
+[% INCLUDE include/footer.tt %]

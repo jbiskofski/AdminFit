@@ -1,0 +1,142 @@
+[% INCLUDE include/header/main.tt %]
+
+
+<script>
+require(['jquery'], function($, selectize) {
+        $(document).ready(function() {
+                $('#INPUT-SEARCH-DATE').on('apply.daterangepicker', function(ev, picker) {
+                        window.location.href = "[% ttf.uri( c => 'membresias', m => 'resumen' ) %]?fecha=" + this.value;
+                });
+        });
+});
+</script>
+
+<div class="col-sm-3">
+        <div id="DIV-SIDE-FACTS-PINNED">
+                <div class="page-header" style="margin-top:0px !important">
+                        <div class="h1 page-title" style="width:100%;text-align:right">
+                                Inscripciones y renovaciones
+                                <br>
+                                [% p.fecha %]
+                        </div>
+                </div>
+                <div class="p-0" style="margin-bottom:34px">
+                        <div class="form-label text-right">Fecha&nbsp;&nbsp;</div>
+                        <form action="[% ttf.uri( c => 'membresias', m => 'resumen' ) %]" method="get">
+                                <div class="input-group">
+                                        <input type="text" id="INPUT-SEARCH-DATE" class="form-control date-calendar" style="text-align:right" maxlength="10" placeholder="Fecha">
+                                        <span class="input-group-append">
+                                                <span class="input-group-text"><i class="fe fe-calendar"></i></span>
+                                        </span>
+                                </div>
+                        </form>
+                </div>
+                <div class="card p-3">
+                        <div class="d-flex align-items-center">
+                                <span class="stamp stamp-md bg-blue mr-3">
+                                        <i class="fe fe-user-plus"></i>
+                                </span>
+                                <div>
+                                        <h4 class="m-0">[% data.summary.new_enrollments.size || 0 %]</h4>
+                                        <small class="d-block text-muted">
+                                                [% ttf.plural(data.summary.new_enrollments.size, 'Inscripci&oacute;n', 'Inscripci&oacute;nes') %]
+                                        </small>
+                                </div>
+                        </div>
+                </div>
+                <div class="card p-3">
+                        <div class="d-flex align-items-center">
+                                <span class="stamp stamp-md bg-gray mr-3">
+                                        <i class="fe fe-repeat"></i>
+                                </span>
+                                <div>
+                                        <h4 class="m-0">[% data.summary.remembership_users.size || 0 %]</h4>
+                                        <small class="d-block text-muted">
+                                                [% ttf.plural(data.summary.remembership_users.size, 'Renovaci&oacute;n', 'Renovaci&oacute;nes') %]
+                                        </small>
+                                </div>
+                        </div>
+                </div>
+        </div>
+</div>
+
+<div class="col-sm-9">
+        <div class="row">
+                [% IF data.summary.new_enrollments.size %]
+                        <div class="col">
+                                <div class="card">
+                                        <div class="card-status bg-blue"></div>
+                                        <div class="card-header">
+                                                <h3 class="card-title">Inscripciones</h3>
+                                        </div>
+                                        <div class="table-responsive">
+                                                <table class="table table-hover table-outline table-vcenter text-nowrap card-table">
+                                                        <tbody>
+                                                                [% FOREACH cc = data.summary.new_enrollments %]
+                                                                        <tr>
+                                                                                <td class="w-1">
+                                                                                        [% ttf.avatar(
+                                                                                                id => cc.id,
+                                                                                                has_profile_picture => cc.has_profile_picture,
+                                                                                                has_picture => cc.has_picture,
+                                                                                                name => cc.display_name ) %]
+                                                                                </td>
+                                                                                <td>
+                                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => cc.id) %]" class="text-inherit">
+                                                                                                [% cc.display_name %]
+                                                                                        </a>
+                                                                                        [% IF !cc.active %]
+                                                                                                <div class="tags">
+                                                                                                        <div class="tag tag-gray">
+                                                                                                                Deshabilitado
+                                                                                                                <span class="tag-addon"><i class="fe fe-tag"></i></span>
+                                                                                                        </div>
+                                                                                                </div>
+                                                                                        [% END %]
+                                                                                </td>
+                                                                        </tr>
+                                                                [% END %]
+                                                        </tbody>
+
+                                                </table>
+                                        </div>
+                                </div>
+                        </div>
+                [% END %]
+                [% IF data.summary.remembership_users.size %]
+                        <div class="col">
+                                <div class="card">
+                                        <div class="card-status bg-gray"></div>
+                                        <div class="card-header">
+                                                <h3 class="card-title">Renovaciones</h3>
+                                        </div>
+                                        <div class="table-responsive">
+                                                <table class="table table-hover table-outline table-vcenter text-nowrap card-table">
+                                                        <tbody>
+                                                                [% FOREACH cc = data.summary.remembership_users %]
+                                                                        <tr>
+                                                                                <td class="w-1">
+                                                                                        [% ttf.avatar(
+                                                                                                id => cc.id,
+                                                                                                has_profile_picture => cc.has_profile_picture,
+                                                                                                has_picture => cc.has_picture,
+                                                                                                name => cc.display_name ) %]
+                                                                                </td>
+                                                                                <td>
+                                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => cc.id) %]" class="text-inherit">
+                                                                                                [% cc.display_name %]
+                                                                                        </a>
+                                                                                </td>
+                                                                        </tr>
+                                                                [% END %]
+                                                        </tbody>
+
+                                                </table>
+                                        </div>
+                                </div>
+                        </div>
+                [% END %]
+        </div>
+</div>
+
+[% INCLUDE include/footer.tt %]

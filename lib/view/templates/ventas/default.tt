@@ -1,0 +1,257 @@
+[% INCLUDE include/header/main.tt %]
+
+<script>
+require(['jquery'], function($) {
+        $(document).ready( function() {
+
+                $(".INPUT-ADD-INVENTORY").keydown( function(e) {
+                        var CODE = e.which;
+                        if( CODE === 13 ) {
+                                e.preventDefault();
+                                var ITEM_ID = $(this).data("item_id");
+                                var COUNT = parseInt( this.value );
+                                if ( !!COUNT ) add_inventory(ITEM_ID, COUNT);
+                        }
+                });
+
+
+                $(".BTN-ADD-INVENTORY").click( function() {
+                        var ITEM_ID = $(this).data("item_id");
+                        var COUNT = parseInt( $("input.INPUT-ADD-INVENTORY[data-item_id='" + ITEM_ID + "']").val() );
+                        if ( !!COUNT ) add_inventory(ITEM_ID, COUNT);
+                });
+
+                function add_inventory(ITEM_ID, COUNT) {
+                        var URI = "[% ttf.uri( c => 'ventas', m => 'add-inventory-do') %]?id=" + ITEM_ID + "&count=" + COUNT;
+                        window.location.replace(URI);
+                }
+
+                $("input[name=RADIO-CHART]").change( function() {
+                        if ( this.value === 'INVENTORY' ) {
+                                $("#DIV-PIE-SALES").hide();
+                                $("#DIV-PIE-INVENTORY").fadeIn();
+                                $("#H3-CHART-TITLE").html("Inventario");
+                        }
+                        else {
+                                $("#DIV-PIE-SALES").fadeIn();
+                                $("#DIV-PIE-INVENTORY").hide();
+                                $("#H3-CHART-TITLE").html("Ventas del mes");
+                        }
+                });
+
+        });
+});
+</script>
+
+<div class="col-sm-3">
+
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-yellow mr-3">
+                                <i class="fe fe-shopping-cart"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">
+                                        [% data.products.size || 0 %]
+                                        <small>[% ttf.plural(data.products.size, 'Producto', 'Productos') %] en venta</small>
+                                </h4>
+                        </div>
+                </div>
+        </div>
+
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-red mr-3">
+                                <i class="fe fe-package"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">
+                                        [% data.total_inventory_items %]
+                                </h4>
+                                <small>[% ttf.plural(data.total_inventory_items, 'Art&iacute;culo', 'Art&iacute;culos') %] en inventario</small>
+                        </div>
+                </div>
+        </div>
+
+        [% IF data.charts.inventory || data.charts.sales %]
+                <div class="card">
+                        <div class="card-status bg-blue"></div>
+                        <div class="card-header">
+                                <h3 class="card-title" id="H3-CHART-TITLE">
+                                        [% IF !data.charts.inventory && data.charts.sales %]
+                                                Ventas del mes
+                                        [% ELSE %]
+                                                Inventario
+                                        [% END %]
+                                </h3>
+                                [% IF data.total_inventory_items && data.total_month_income %]
+                                        <div class="card-options" style="padding-top:15px">
+                                                <div class="selectgroup selectgroup-pills">
+                                                        [% IF data.total_inventory_items %]
+                                                                <label class="selectgroup-item">
+                                                                        <input type="radio" name="RADIO-CHART" value="INVENTORY" class="selectgroup-input" checked="checked" autocomplete="off">
+                                                                        <span class="selectgroup-button selectgroup-button-icon">
+                                                                                [% ttf.tip('Inventario', icon => 'package') %]
+                                                                        </span>
+                                                                </label>
+                                                        [% END %]
+                                                        [% IF data.total_month_income %]
+                                                                <label class="selectgroup-item">
+                                                                        <input type="radio" name="RADIO-CHART" value="SALES" class="selectgroup-input" autocomplete="off">
+                                                                        <span class="selectgroup-button selectgroup-button-icon">
+                                                                                [% ttf.tip('Ventas', icon => 'dollar-sign') %]
+                                                                        </span>
+                                                                </label>
+                                                        [% END %]
+                                                </div>
+                                        </div>
+                                [% END %]
+                        </div>
+                        <div id="DIV-PIE-INVENTORY" class="card-body" [% IF !data.charts.inventory && data.charts.sales %]style="display:none"[% END %]>
+                                <div id="DIV-INVENTORY-CHART" style="height:14rem;max-height:14rem;position:relative;" class="c3"></div>
+                                [% data.charts.inventory %]
+                        </div>
+                        <div id="DIV-PIE-SALES" class="card-body" [% IF data.charts.inventory %]style="display:none"[% END %]>
+                                <div id="DIV-SALES-CHART" style="height:14rem;max-height:14rem;position:relative;" class="c3"></div>
+                                [% data.charts.sales %]
+                        </div>
+                </div>
+        [% END %]
+
+</div>
+
+<div class="col-sm-9">[% INCLUDE include/ventas/upsert.tt %]</div>
+
+[% IF data.products.size %]
+
+        <div class="col-sm-12">
+                <div class="page-header">
+                        <h1 class="page-title">Productos y servicios en venta</h1>
+                </div>
+        </div>
+
+        <div class="col-sm-12">
+                <div class="card">
+                        <div class="card-status bg-green"></div>
+                        <div class="card-header">
+                                <h3 class="card-title">Ventas del mes</h3>
+                                <div class="card-options">
+                                        <div>
+                                                <div class="input-group" style="width:188px;height:26px">
+                                                        <span class="input-group-prepend">
+                                                                <span class="input-group-text">
+                                                                        <i class="fe fe-search mr-1"></i>
+                                                                </span>
+                                                        </span>
+                                                        <input type="text" data-search_table="table-products" class="table-search-input form-control" placeholder="Buscar">
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+                        [% IF data.charts.daily_sales %]
+                                <div id="DIV-DAILY-SALES-CHART" style="height:10rem;max-height:160px;position:relative;" class="c3"></div>
+                                [% data.charts.daily_sales %]
+                        [% END %]
+                        <div class="table-responsive">
+                                <table id="table-products" class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                        <thead>
+                                                <tr>
+                                                        <th class="w-1"></th>
+                                                        <th class="w-1"></th>
+                                                        <th>Nombre</th>
+                                                        <th>Tipo</th>
+                                                        <th>Precio</th>
+                                                        <th>Ventas</th>
+                                                        <th>Inventario</th>
+                                                        <th>Adeudo</th>
+                                                        <th class="text-right">Agregar</th>
+                                                </tr>
+                                        </thead>
+                                        <tbody>
+                                                [% SET TOTAL_SALES = 0 %]
+                                                [% SET TOTAL_INVENTORY = 0 %]
+                                                [% SET TOTAL_DEBT = 0 %]
+                                                [% FOREACH ii = data.products %]
+                                                        <tr>
+                                                                <td class="w-1">[% loop.count %].</td>
+                                                                <td class="w-1">
+                                                                        [% IF ii.use_inventory %]
+                                                                                [% ttf.gr(ii.inventory.TOTAL) %]
+                                                                        [% ELSE %]
+                                                                                <span class="status-icon bg-secondary"></span>
+                                                                        [% END %]
+                                                                </td>
+                                                                <td class="table-search-col" [% IF !ii.active %]style="text-decoration:line-through;color:#9aa0ac"[% END %]>
+                                                                        <a href="[% ttf.uri( c => 'ventas', m => 'ver', id => ii.id ) %]" class="text-inherit">
+                                                                                [% ii.name %]
+                                                                        </a>
+                                                                </td>
+                                                                <td>
+                                                                        [% ii.display_type %]
+                                                                        <small class="text-muted">
+                                                                                <br>
+                                                                                [% FOREACH detail = ii.data.values.sort %]
+                                                                                        [% NEXT UNLESS detail %]
+                                                                                        [% detail %]
+                                                                                [% END %]
+                                                                        </small>
+                                                                </td>
+                                                                <td>$[% ttf.commify(ii.amount) %]</td>
+                                                                <td>
+                                                                        [% ii.inventory.SELL || 0 %]
+                                                                        [% TOTAL_SALES = TOTAL_SALES + ii.inventory.SELL %]
+                                                                </td>
+                                                                <td>
+                                                                        [% IF ii.use_inventory %][% ii.inventory.TOTAL || 0 %][% ELSE %]-[% END %]
+                                                                        [% TOTAL_INVENTORY = TOTAL_INVENTORY + ii.inventory.TOTAL %]
+                                                                </td>
+                                                                <td
+                                                                        [% IF ii.total_debt > 0 %]
+                                                                                class="text-red"
+                                                                        [% ELSE %]
+                                                                                class="small amount-paid"
+                                                                        [% END %]>
+                                                                        $[% ttf.commify( ii.total_debt || 0 ) %]
+                                                                        [% TOTAL_DEBT = TOTAL_DEBT + ii.total_debt %]
+                                                                </td>
+                                                                <td align="right">
+                                                                        [% IF ii.use_inventory %]
+                                                                                <div class="input-group" style="width:178px;height:26px;">
+                                                                                        <input type="text"
+                                                                                                data-item_id="[% ii.id %]"
+                                                                                                onkeypress="return __ADMINFIT__.numbers_only(this, event)"
+                                                                                                class="form-control INPUT-ADD-INVENTORY"
+                                                                                                style="text-align:right"
+                                                                                                maxlength="4"
+                                                                                                placeholder="Agregar inventario">
+                                                                                        <span class="input-group-append">
+                                                                                                <button class="btn btn-sm btn-success BTN-ADD-INVENTORY" data-item_id="[% ii.id %]" type="button">
+                                                                                                        <i class="fe fe-plus mr-1"></i>
+                                                                                                </button>
+                                                                                        </span>
+                                                                                </div>
+                                                                        [% ELSE %]
+                                                                                -&nbsp;
+                                                                        [% END %]
+                                                                </td>
+                                                        </tr>
+                                                [% END %]
+                                        </tbody>
+
+                                        <tfoot class="table-success h5">
+                                                <tr>
+                                                        <td colspan="5">&nbsp;</td>
+                                                        <td>[% TOTAL_SALES || 0 %]</td>
+                                                        <td>[% TOTAL_INVENTORY || 0 %]</td>
+                                                        <td>$[% ttf.commify(TOTAL_DEBT || 0) %]</td>
+                                                        <td>&nbsp;</td>
+                                                </tr>
+                                        </tfoot>
+                                </table>
+                        </div>
+                </div>
+        </div>
+
+[% END %]
+
+[% INCLUDE include/footer.tt %]

@@ -1,0 +1,151 @@
+<script>
+
+require(['jquery', 'selectize'], function($, selectize) {
+        $(document).ready( function() {
+                $("select[name=ym]").selectize({
+                        render: {
+                                option: function (data, escape) {
+                                        var CHECK_IMAGE = "";
+                                        [% IF data.membership.type_code == 'I'
+                                                || ( data.membership.type_code == 'G' && data.membership.is_responsible_for_group_membership ) %]
+                                                if ( data.membership_charged ) CHECK_IMAGE = '<i class="fe fe-check-circle text-green"></i>';
+                                        [% END %]
+                                        return '<div>' + '<span class="title">' + escape(data.text) + '</span>' + CHECK_IMAGE + '</div>';
+                                },
+                                item: function (data, escape) {
+                                        var CHECK_IMAGE = "";
+                                        [% IF data.membership.type_code == 'I'
+                                                || ( data.membership.type_code == 'G' && data.membership.is_responsible_for_group_membership ) %]
+                                                if ( data.membership_charged ) CHECK_IMAGE = '<i class="fe fe-check-circle text-green"></i>';
+                                        [% END %]
+                                        return '<div>' + '<span class="title">' + escape(data.text) + '</span>' + CHECK_IMAGE + '</div>';
+                                }
+                        }
+                });
+                $( "input[name='type_code']" ).change( function() {
+                        $("select[name=ym]")[0].selectize.setValue("[% ttf.today_parts().year %]_[% ttf.today_parts().month %]");
+                        var VALUE = $( "input[name='type_code']:checked" ).val();
+                        if ( VALUE === 'M' ) {
+                                $( "input[name='amount']" ).val( parseFloat("[% data.membership.amount %]").toFixed(2) );
+                                $(".DIV-MEMBERSHIP-DETAILS").fadeIn("slow");
+                                $("#DIV-CHARGE-NAME").hide();
+                                $("select[name=ym]").find('option[data-membership_charged="1"]').prop("disabled", "disabled");
+                        }
+                        else {
+                                $( "input[name='amount']" ).val('');
+                                $(".DIV-MEMBERSHIP-DETAILS").hide();
+                                $("#DIV-CHARGE-NAME").fadeIn("slow");
+                                $("select[name=ym]").find('option[data-membership_charged="1"]').removeAttr("disabled");
+                        }
+                });
+        });
+});
+
+function check_concept() {
+        if ( $( "input[name='type_code']:checked" ).val() === 'M' ) return true;
+        if ( $( "input[name='concept']" ).val().length > 0 ) return true;
+        return false;
+}
+
+</script>
+
+<div class="card-status bg-red"></div>
+<div class="card-header">
+        <h3 class="card-title">Agregar adeudo</h3>
+        <div class="card-options">
+                <a href="javascript:;" id="A-CLOSE-ADD-NEW-CHARGE"><i class="fe fe-x"></i></a>
+        </div>
+</div>
+<div class="card-alert alert mb-0" id="FORM-STATUS-ADD_CHARGE" style="display:none"></div>
+<div class="card-body">
+        <div class="row">
+                <div class="col">
+                        <div class="form-group">
+                                <label class="form-label">Periodo</label>
+                                <select name="ym" class="form-control custom-select">
+                                        [% FOREACH ym = data.months %]
+                                                <option data-data='{"membership_charged":[% IF ym.membership_charged %]true[% ELSE %]false[% END %]}'
+                                                        [% IF ym.current %]data-current="1"[% END %]
+                                                        value="[% ym.year %]_[% ym.month %]">
+                                                        [% ym.year %] &raquo; [% ym.display_month %]
+                                                </option>
+                                        [% END %]
+                                </select>
+                        </div>
+                        [% IF data.has_charged_memberships
+                                && ( data.membership.type_code == 'I'
+                                        || ( data.membership.type_code == 'G'
+                                                && data.membership.is_responsible_for_group_membership ) ) %]
+                                                        <div class="form-group DIV-MEMBERSHIP-DETAILS alert alert-warning" role="alert">
+                                                                <i class="fe fe-check-circle text-green mr-2" aria-hidden="true"></i>
+                                                                Los meses con esta marca ya tienen una membres&iacute;a cobrada.
+                                                        </div>
+                        [% END %]
+                </div>
+                <div class="col">
+                        [% IF data.membership.type_code == 'I'
+                                || ( data.membership.type_code == 'G' && data.membership.is_responsible_for_group_membership ) %]
+                                <div class="form-group">
+                                        <label class="form-label">Tipo de adeudo</label>
+                                        <div class="selectgroup w-100">
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" name="type_code" value="I" class="selectgroup-input" checked="checked">
+                                                        <span class="selectgroup-button">Otro</span>
+                                                </label>
+                                                [% IF data.membership.membership_id %]
+                                                        <label class="selectgroup-item">
+                                                                <input type="radio" name="type_code" value="M" class="selectgroup-input">
+                                                                <span class="selectgroup-button">Membres&iacute;a</span>
+                                                        </label>
+                                                [% END %]
+                                        </div>
+                                </div>
+                                <div class="form-group DIV-MEMBERSHIP-DETAILS" style="display:none">
+                                        <label class="form-label">Membres&iacute;a</label>
+                                        <span class="small text-muted">
+                                                [% data.membership.name %]
+                                                <br>
+                                                $[% ttf.commify(data.membership.amount) %]
+                                                <br>
+                                                D&iacute;a de renovaci&oacute;n : [% data.membership.renewal_day %]
+                                        </span>
+                                </div>
+                        [% END %]
+                        <div class="form-group" id="DIV-CHARGE-NAME">
+                                <label class="form-label">Concepto</label>
+                                <div class="input-group">
+                                        <input type="text" name="concept" class="form-control" placeholder="Concepto">
+                                </div>
+                        </div>
+                </div>
+                <div class="col">
+                        <div class="form-group">
+                                <label class="form-label">Precio</label>
+                                <div class="input-group">
+                                        <span class="input-group-prepend">
+                                                <span class="input-group-text">$</span>
+                                        </span>
+                                        <input type="text" name="amount" class="form-control text-right" data-mask="000,000,000.00" data-mask-reverse="true" maxlength="8" placeholder="$100.00">
+                                </div>
+                                <span class="small text-muted" style="position:absolute;right:1rem;">
+                                        Costo total del adeudo nuevo.
+                                        [% ttf.tip('Una vez agregado el cobro con esta cantidad, se puede pagar por completo o parcialmente.') %]
+                                </span>
+                        </div>
+                        <div class="form-group" style="padding-top:8px">
+                                <label class="form-label">Notas</label>
+                                <div class="input-group">
+                                        <textarea name="notes" rows="3" class="form-control" placeholder="Notas"></textarea>
+                                </div>
+                        </div>
+                </div>
+        </div>
+</div>
+<div class="card-footer text-right">
+        <div class="d-flex">
+                <button type="submit" class="btn btn-primary ml-auto btn-red">
+                        <i class="fe fe-plus"></i>
+                        Agregar a la lista de pagos por confirmar
+                </button>
+        </div>
+</div>

@@ -1,0 +1,224 @@
+<script>
+
+        var AVAILABLE_BALANCE = parseFloat("[% data.balance.balance %]");
+
+        require(['jquery'], function($) {
+                $(document).ready(function() {
+                        $("#INPUT-SHOPPING-CART-DEBIT-TOTAL").keyup( function() {
+
+                                var DEBIT_TOTAL = parseFloat( this.value );
+                                if ( isNaN(DEBIT_TOTAL) ) DEBIT_TOTAL = 0;
+
+                                var CART_DATA = _get_cart_data();
+                                var REMAINING = parseFloat( CART_DATA.total - DEBIT_TOTAL );
+
+                                $("#INPUT-SHOPPING-CART-PAYMENT-TOTAL").val( __ADMINFIT__.commify(REMAINING.toFixed(2)));
+                                if ( REMAINING >= 0 ) $("#SPAN-SHOPPING-CART-PAYMENT-TOTAL").html( "$" + __ADMINFIT__.commify(REMAINING.toFixed(2) ) );
+
+                                if ( REMAINING < 0 ) {
+                                        __ADMINFIT__.display_error( "La cantidad que se va a utilizar del saldo a favor debe ser menor que el total de los adeudos : $" + __ADMINFIT__.commify(CART_DATA.amount.toFixed(2)), null, 'SHOPPING_CART' );
+                                        $(this).addClass("is-invalid");
+                                        $("#BTN-PAY-NOW").addClass("disabled");
+                                        $("#SPAN-SHOPPING-CART-PAYMENT-TOTAL").html("");
+                                        return false;
+                                }
+
+                                if ( DEBIT_TOTAL > AVAILABLE_BALANCE ) {
+                                        __ADMINFIT__.display_error( "Cantidad inv&aacute;lida. El saldo a favor disponible es : $" + __ADMINFIT__.commify(AVAILABLE_BALANCE.toFixed(2)), null, 'SHOPPING_CART' );
+                                        $(this).addClass("is-invalid");
+                                        $("#BTN-PAY-NOW").addClass("disabled");
+                                        $("#SPAN-SHOPPING-CART-PAYMENT-TOTAL").html("");
+                                        return false;
+                                }
+
+                                $("#FORM-STATUS-SHOPPING_CART").hide();
+                                $(this).removeClass("is-invalid");
+                                $("#BTN-PAY-NOW").removeClass("disabled");
+
+                        });
+                });
+        });
+
+        function _update_payment_totals() {
+
+                var CART_DATA = _get_cart_data();
+
+                if ( CART_DATA.pre_concepts > 0 && CART_DATA.concepts === 0 ) {
+                        $("#INPUT-SHOPPING-CART-DEBIT-TOTAL").val(0);
+                        $("#INPUT-SHOPPING-CART-DEBIT-TOTAL").prop("disabled","disabled")
+                }
+                else {
+                        $("#INPUT-SHOPPING-CART-DEBIT-TOTAL").val("");
+                        $("#INPUT-SHOPPING-CART-DEBIT-TOTAL").removeProp("disabled");
+                }
+
+                $("#SPAN-SHOPPING-CART-TOTAL").html( "$" + __ADMINFIT__.commify( CART_DATA.total.toFixed(2) ) );
+
+                if ( CART_DATA.amount <= AVAILABLE_BALANCE ) {
+                        $("#INPUT-SHOPPING-CART-DEBIT-TOTAL").val( CART_DATA.amount.toFixed(2) );
+                }
+                else {
+                        $("#INPUT-SHOPPING-CART-DEBIT-TOTAL").val( AVAILABLE_BALANCE.toFixed(2) );
+                }
+
+                $("#INPUT-SHOPPING-CART-DEBIT-TOTAL").trigger("keyup");
+
+        }
+
+        function _get_cart_data() {
+
+                var WANT_TO_PREPAY_AMOUNT = 0;
+                var AMOUNT = 0;
+                var CONCEPTS = 0;
+                var PRE_CONCEPTS = 0;
+
+                $("table.TABLE-SHOPPING-CART tr td.TD-CART-AMOUNT").each( function(i, TD) {
+
+                        var TYPE_CODE = $(TD).parents("tr").data("type_code");
+
+                        if ( TYPE_CODE === "PRE" ) {
+                                WANT_TO_PREPAY_AMOUNT += parseFloat( $(TD).find("span.SPAN-ITEM-TOTAL").html().replace(/\$|,/g, '') );
+                                PRE_CONCEPTS++;
+                        }
+                        else {
+                                if ( $(TD).find("span.SPAN-ITEM-TOTAL").length ) {
+                                        AMOUNT += parseFloat( $(TD).find("span.SPAN-ITEM-TOTAL").html().replace(/\$|,/g, '') );
+                                }
+                                else if ( $(TD).find("input.INPUT-PARTIAL-PAYMENT").length ) {
+                                        AMOUNT += parseFloat( $(TD).find("input.INPUT-PARTIAL-PAYMENT").val().replace(/\$|,/g, '') );
+                                }
+                                CONCEPTS++;
+                        }
+
+                });
+
+                if ( isNaN(AMOUNT) ) AMOUNT = 0;
+                if ( isNaN(WANT_TO_PREPAY_AMOUNT) ) WANT_TO_PREPAY_AMOUNT = 0;
+
+                return {
+                        want_to_prepay_amount : parseFloat( WANT_TO_PREPAY_AMOUNT ),
+                        amount : parseFloat( AMOUNT ),
+                        total : parseFloat( AMOUNT + WANT_TO_PREPAY_AMOUNT ),
+                        concepts : parseInt( CONCEPTS ),
+                        pre_concepts : parseInt( PRE_CONCEPTS ),
+                        total_concepts : parseInt( CONCEPTS + PRE_CONCEPTS ),
+                };
+
+        }
+
+</script>
+
+<fieldset class="col-sm-12 form-fieldset">
+        <form name="default" action="[% ttf.uri( c => 'ventas', m => 'process-payments-do' ) %]" method="post">
+                <input type="hidden" name="client_id" value="[% p.id %]">
+                <input type="hidden" id="JSON-CART-ITEMS" name="JSON_cart_items" value="">
+                <div class="row">
+                        <div class="form-group col-sm-4 text-right">
+                                <div style="display:inline;font-weight:bold;font-size:20px;">
+                                        Utilizar saldo a favor
+                                </div>
+                        </div>
+                        <div class="form-group col-sm-4">
+                                <div class="input-group">
+                                        <span class="input-group-prepend">
+                                                <span class="input-group-text">
+                                                        <i class="fe fe-arrow-up-circle text-gray"></i>
+                                                </span>
+                                        </span>
+                                        <input
+                                                type="text"
+                                                class="form-control text-right"
+
+
+
+                                                disabled="disabled"
+                                                style="font-size:22px;font-weight:bold;padding-top:0px;padding-bottom:0px;color:#6e7687"
+                                                value="$[% ttf.commify(data.balance.balance) %]">
+                                </div>
+                                <span class="small text-muted" style="margin-right:6px">Disponible</span>
+                        </div>
+                        <div class="form-group col-sm-4">
+                                <div class="input-group">
+                                        <span class="input-group-prepend">
+                                                <span class="input-group-text text-green" style="background:#FFF">
+                                                        <i class="fe fe-dollar-sign"></i>
+                                                </span>
+                                        </span>
+                                        <input
+                                                id="INPUT-SHOPPING-CART-DEBIT-TOTAL"
+                                                type="text"
+                                                name="debit_amount"
+                                                class="form-control text-right"
+                                                data-mask="000,000,000.00"
+                                                data-mask-reverse="true"
+
+
+
+
+                                                maxlength="14"
+                                                style="background:#FFF"
+                                                placeholder="$100.00"
+                                                value="">
+                                </div>
+                                <span class="small text-muted" style="margin-right:6px">Esta cantidad ser&aacute; descontada&nbsp;&nbsp;<br>del saldo a favor</span>
+                        </div>
+                </div>
+                <div class="row">
+                        <div class="form-group col-sm-4 text-right">
+                                <div style="font-weight:bold;font-size:20px">Pagar</div>
+                        </div>
+                        <div class="form-group col-sm-4">
+                                <select name="method_type_code" class="custom-select">
+                                        <option value="CASH" selected="selected">Efectivo</option>
+                                        <option value="CARD">Tarjeta de cr&eacute;dito o d&eacute;bito</option>
+                                        <option value="TRANSFER">Transferencia</option>
+                                </select>
+                                <span class="small text-muted" style="margin-right:6px">Metodo de pago</span>
+                        </div>
+                        <div class="form-group col-sm-4">
+                                <div class="input-group">
+                                        <span class="input-group-prepend">
+                                                <span class="input-group-text text-gray">
+                                                        <i class="fe fe-dollar-sign"></i>
+                                                </span>
+                                        </span>
+                                        <input
+                                                id="INPUT-SHOPPING-CART-PAYMENT-TOTAL"
+                                                type="text"
+                                                name="debit_amount"
+                                                class="form-control text-right"
+                                                data-mask="000,000,000.00"
+                                                data-mask-reverse="true"
+
+
+
+
+
+                                                placeholder="$0.00"
+                                                disabled="disbled"
+                                                style="font-size:22px;font-weight:bold;padding-top:0px;padding-bottom:0px;color:#6e7687"
+                                                value="">
+                                </div>
+                                <small class="text-muted d-block" style="margin-right:6px">Esta cantidad se va a recibir</small>
+                        </div>
+                </div>
+                <div class="row">
+                        <div class="col-sm-12">
+                                <span style="font-weight:bold;font-size:18px;text-align:right;margin-right:10px" id="SPAN-SHOPPING-CART-TOTAL">$[% ttf.commify(data.balance.balance) %]</span>
+                                <small class="text-muted d-block" style="margin-right:10px">Total ( Saldo + Pago )</small>
+                        </div>
+                </div>
+                <div class="row" style="margin-top:18px">
+                        <div class="form-group col-sm-6">
+                                <textarea name="notes" class="form-control" style="height:54px"></textarea>
+                                <small class="d-block">Notas</small>
+                        </div>
+                        <div class="form-group col-sm-6">
+                                <a href="javascript:;" id="BTN-PAY-NOW" class="w-100 btn btn-primary">
+                                        <i class="fe fe-check"></i>
+                                        Confirmar pago <span style="margin-left:6px;font-weight:bold;font-size:22px" id="SPAN-SHOPPING-CART-PAYMENT-TOTAL"></span>
+                                </a>
+                        </div>
+                </div>
+        </form>
+</fieldset>

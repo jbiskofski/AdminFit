@@ -1,0 +1,8 @@
+[% INCLUDE include/header/main.tt %]
+[% INCLUDE include/clientes/menu.tt %]
+
+<div class="col">
+        [% INCLUDE include/usuarios/profile.tt %]
+</div>
+
+[% INCLUDE include/footer.tt %]

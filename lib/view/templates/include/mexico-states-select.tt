@@ -1,0 +1,42 @@
+[%~ SET STATES_BY_COUNTRY.MEXICO = [
+   'Aguascalientes'
+   'Baja California'
+   'Baja California Sur'
+   'Campeche'
+   'Ciudad de México'
+   'Chiapas'
+   'Chihuahua'
+   'Coahuila'
+   'Colima'
+   'Durango'
+   'Guanajuato'
+   'Guerrero'
+   'Hidalgo'
+   'Jalisco'
+   'México'
+   'Michoacán'
+   'Morelos'
+   'Nayarit'
+   'Nuevo León'
+   'Oaxaca'
+   'Puebla'
+   'Querétaro'
+   'Quintana Roo'
+   'San Luis Potosí'
+   'Sinaloa'
+   'Sonora'
+   'Tabasco'
+   'Tamaulipas'
+   'Tlaxcala'
+   'Veracruz'
+   'Yucatán'
+   'Zacatecas'
+	] ~%]
+[%~ SET STATES = STATES_BY_COUNTRY.MEXICO %]
+<select class="form-control custom-select" name="[% IF name != "" %][% name %][% ELSE %]state[% END %]">
+        <option value=""></option>
+        [% FOREACH state = STATES ~%]
+                [% SET STATE_VALUE = ttf.unaccent(state).upper %]
+                 <option value="[% STATE_VALUE %]" [% ttf.selected(STATE_VALUE == SELECTED_STATE) %]>[% state %]</option>
+        [% END %]
+</select>

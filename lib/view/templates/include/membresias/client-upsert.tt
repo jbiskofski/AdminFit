@@ -1,0 +1,360 @@
+<script>
+require(['jquery', 'selectize'], function($, selectize) {
+
+        $(document).ready( function() {
+
+                $("input[name=BOOL-allow_client_access]").change( function() {
+                        if ( !!parseInt(this.value) ) {
+                                $(".DIV-USERNAME-PASSWORD").fadeIn('slow');
+                                $("input[name='username']").val('');
+                                $("input[name='password']").val('');
+                                $("input[name='_password']").val('');
+                        }
+                        else {
+                                $(".DIV-USERNAME-PASSWORD").hide();
+                                $("input[name='username']").val('DISABLED-[% ttf.uuid %]');
+                                $("input[name='password']").val('DISABLED');
+                                $("input[name='_password']").val('DISABLED');
+                        }
+                });
+
+                $(".RADIO-MEMBERSHIPS").change( function() {
+
+                        [% IF IS_UPDATE && data.pending_membership_charges.size %]
+                                var SELECTED_MEMBERSHIP_ID = $(".RADIO-MEMBERSHIPS:checked").val();
+                                if ( SELECTED_MEMBERSHIP_ID === "[% data.membership.membership_id %]" ) {
+                                        $("#DIV-PENDING-MEMBERSHIP-CHARGES").hide();
+                                }
+                                else {
+                                        var SELECTED_MEMBERSHIP_AMOUNT = $(".RADIO-MEMBERSHIPS:checked").data("amount");
+                                        $("#SPAN-NEW-MEMBERSHIP-AMOUNT").html("$" + __ADMINFIT__.commify(SELECTED_MEMBERSHIP_AMOUNT));
+                                        $("#DIV-PENDING-MEMBERSHIP-CHARGES").fadeIn("slow");
+                                }
+                        [% END %]
+
+                        _clear_group_membership_config(true);
+                        $("#DIV-GROUP-MEMBERSHIP-ROLE").hide();
+                        $("#DIV-GROUP-MEMBERSHIP-RESPONSIBLE-CLIENT").hide();
+                        $("#DIV-GROUP-DEPENDENTS").hide();
+                        $("#DIV-GROUP-MEMBERSHIP-ERROR").remove();
+                        $("input[name=BOOL-is_responsible_for_group_membership]").filter("[value=1]").prop('checked', true);
+                        if ( $(this).data('type_code') === 'I' ) return true;
+                        $("#DIV-GROUP-DEPENDENTS").fadeIn('slow');
+                        $("#DIV-GROUP-MEMBERSHIP-ROLE").fadeIn('slow');
+
+                });
+
+                $("input[name=BOOL-is_responsible_for_group_membership]").change( function() {
+                        var IS_RESPONSIBLE = !!parseInt(this.value);
+                        _clear_group_membership_config(IS_RESPONSIBLE);
+                        if ( IS_RESPONSIBLE ) return true;
+                        $("input[name=renewal_day]").prop("readonly","readonly");
+                        $("select[name=first_charge_month]").prop("disabled","disabled");
+                        $("#SPAN-RENEWAL-TIP").hide();
+                        $("#SPAN-DEPENDANT-RENEWAL-TIP").fadeIn();
+                        $("#DIV-GROUP-MEMBERSHIP-RESPONSIBLE-CLIENT").fadeIn('slow');
+                        var MEMBERSHIP_ID = $(".RADIO-MEMBERSHIPS:checked").val();
+                        var URI = "[% ttf.uri( c => 'membresias', m => 'x-get-membership-possible-groups' ) %]?client_id=[% p.id %]&membership_id=" + MEMBERSHIP_ID;
+                        $.getJSON(URI, function(GROUPS) { _populate_membership_groups(GROUPS) });
+                });
+
+                function _clear_group_membership_config(IS_RESPONSIBLE) {
+                        $("#DIV-GROUP-MEMBERSHIP-ERROR").remove();
+                        $("#DIV-GROUP-MEMBERSHIP-RESPONSIBLE-CLIENT").hide();
+                        $("#DIV-GROUP-DEPENDENTS").hide();
+                        if ( IS_RESPONSIBLE ) {
+                                $("#SPAN-DEPENDANT-RENEWAL-TIP").hide();
+                                $("#SPAN-RENEWAL-TIP").fadeIn();
+                                $("input[name=renewal_day]").removeProp("readonly");
+                                $("select[name=first_charge_month]").removeProp("disabled");
+                                $("#DIV-GROUP-DEPENDENTS").fadeIn('slow');
+                        }
+                }
+
+                [% IF data.JSON_possible_membership_groups %]
+                        _populate_membership_groups([% data.JSON_possible_membership_groups %]);
+                [% END %]
+
+                function _populate_membership_groups(GROUPS) {
+
+                        if ( GROUPS.length === 0 ) {
+                                $('select[name=membership_group_id]')
+                                        .hide()
+                                        .after(`<div id="DIV-GROUP-MEMBERSHIP-ERROR" class="alert alert-info" role="alert">
+                                                <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                                <b>No se han encontrado responsables de esta mebres&iacute;a.</b>
+                                                <br>
+                                                Para asignar un dependiente de una membres&iacute;a grupal,
+                                                es necesario que exista un cliente responsable por el pago.</div>`);
+                                return false;
+                        }
+
+                        $('select[name=membership_group_id]').selectize()[0].selectize.destroy();
+
+                        var OPTIONS = [];
+                        var SELECTED_ID;
+
+                        $(GROUPS).each( function(II, AA) {
+
+                                OPTIONS.push({
+                                        id : AA.id,
+                                        name : AA.name,
+                                        image_tag : AA.image_tag,
+                                        display_available_text : AA.display_available_text,
+                                });
+
+                                if ( AA.selected ) SELECTED_ID = AA.id;
+
+                        });
+
+                        var SELECT = $('select[name=membership_group_id]').selectize({
+                                valueField: 'id',
+                                options: OPTIONS,
+                                create: false,
+                                render: {
+                                        option: function(data, escape) {
+                                                return '<div>'
+                                                + data.image_tag +
+                                                '&nbsp;<span class="title">'
+                                                + escape(data.name)
+                                                + '</span>'
+                                                + '<small class="d-block item-except text-sm text-muted h-1x text-right">'
+                                                + data.display_available_text
+                                                + '&nbsp;<i class="fe fe-check"></i></small></div>';
+                                        },
+                                        item: function(data, escape) {
+                                                return '<div>'
+                                                + data.image_tag +
+                                                '&nbsp;<span class="title">'
+                                                + escape(data.name)
+                                                + '</span>'
+                                                + '</div>';
+                                        }
+                                }
+                        });
+
+                        if ( SELECTED_ID && SELECTED_ID.length > 0 ) SELECT[0].selectize.setValue(SELECTED_ID, false);
+
+                }
+
+        });
+
+});
+
+function check_membership_group() {
+        if ( $(".RADIO-MEMBERSHIPS:checked").data('type_code') === 'I' ) return true;
+        if ( !!parseInt( $("input[name=BOOL-is_responsible_for_group_membership]:checked").val() ) ) return true;
+        if ( !!$('select[name=membership_group_id] option:selected').val() ) return true;
+        return false;
+}
+</script>
+
+<div class="card">
+        <div class="card-status bg-green"></div>
+        <div class="card-header">
+                <h3 class="card-title">Membres&iacute;a</h3>
+        </div>
+        [% IF IS_RENEWAL %]
+                <div class="card-alert alert mb-0" id="FORM-STATUS-default" style="display:none"></div>
+        [% END %]
+        <div class="card-body">
+                <div class="row">
+                        <div class="col">
+                                <div class="row form-fieldset">
+                                        <div class="col">
+                                                <div class="form-group">
+                                                        <label class="form-label">
+                                                                D&iacute;a de renovaci&oacute;n
+                                                        </label>
+                                                        [% SET RENEWAL_DAY = 1 %]
+                                                        [% IF data.membership %]
+                                                                [% RENEWAL_DAY = data.membership.renewal_day %]
+                                                        [% ELSE %]
+                                                                [% RENEWAL_DAY = data.today <= 28 ? data.today : 28 %]
+                                                        [% END %]
+                                                        <input type="number" name="renewal_day" class="form-control" min="1" max="28" step"1" value="[% RENEWAL_DAY %]">
+                                                </div>
+                                        </div>
+                                        [% IF IS_INSERT %]
+                                                <div class="col">
+                                                        <div class="form-group">
+                                                                <label class="form-label">
+                                                                        Siguiente cobro
+                                                                        <span class="text-red">*</span>
+                                                                </label>
+                                                                <select name="first_charge_month" class="form-control custom-select">
+                                                                        <option value="PREV">[% data.charge_months.prev.year %] &raquo; [% data.charge_months.prev.display_month %]</option>
+                                                                        <option value="CURRENT" selected="selected">[% data.charge_months.current.year %] &raquo; [% data.charge_months.current.display_month %]</option>
+                                                                        <option value="NEXT">[% data.charge_months.next.year %] &raquo; [% data.charge_months.next.display_month %]</option>
+                                                                </select>
+                                                        </div>
+                                                </div>
+                                        [% END %]
+                                </div>
+                        </div>
+                        <div class="col">
+                                <div class="alert alert-info" role="alert" style="height:115px">
+                                        <i class="fe fe-message-circle mr-2" aria-hidden="true"></i>
+                                        <span id="SPAN-RENEWAL-TIP">
+                                                La membres&iacute;a del cliente ser&aacute; cobrada
+                                                recurrentemente este d&iacute;a de cada mes.
+                                                <br>
+                                                <br>
+                                                D&iacute;a m&aacute;ximo : 28
+                                        </span>
+                                        <span id="SPAN-DEPENDANT-RENEWAL-TIP" style="display:none">
+                                                El d&iacute;a de renovaci&oacute;n de un
+                                                dependiente es el de su responsable.
+                                        </span>
+                                </div>
+                        </div>
+                </div>
+                <div class="col-sm-12">
+                        <div class="form-group">
+                                <label class="form-label">
+                                        Membres&iacute;a
+                                        <span class="text-red" style="font-size:16px">*</span>
+                                </label>
+                                <div class="selectgroup selectgroup-pills">
+                                        [% FOREACH mm = data.memberships %]
+                                                <label class="selectgroup-item"
+                                                        data-toggle="tooltip"
+                                                        data-placement="top"
+                                                        title="[% ttf.escape(mm.display_tip) %]">
+                                                        <input type="radio"
+                                                                name="membership_id"
+                                                                value="[% mm.id %]"
+                                                                class="RADIO-MEMBERSHIPS selectgroup-input"
+                                                                data-amount="[% mm.amount %]"
+                                                                data-type_code="[% mm.type_code %]"
+                                                                [% ttf.checked( ( IS_INSERT && mm.is_default ) || data.membership.membership_id == mm.id ) %]>
+                                                        <span class="selectgroup-button">[% mm.name %]</span>
+                                                </label>
+                                        [% END %]
+                                </div>
+                        </div>
+                </div>
+                <div class="row">
+                        <div class="col-sm-5"
+                                id="DIV-GROUP-MEMBERSHIP-ROLE"
+                                [% UNLESS data.membership.type_code == 'G' %]style="display:none"[% END %]>
+                                <div class="form-group">
+                                        <label class="form-label">
+                                                [% ttf.tip('El cliente responsable de una membres&iacute;a grupal es el encargado de pagar.') %]
+                                                Responsable o dependiente
+                                                <span class="text-red" style="font-size:16px">*</span>
+                                        </label>
+                                </div>
+                                <div class="form-group">
+                                        <div class="selectgroup">
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" name="BOOL-is_responsible_for_group_membership" value="1" class="selectgroup-input" [% ttf.checked(!data.membership || data.membership.is_responsible_for_group_membership) %]>
+                                                        <span class="selectgroup-button">Responsable</span>
+                                                </label>
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" name="BOOL-is_responsible_for_group_membership" value="0" class="selectgroup-input" [% ttf.checked(data.membership && !data.membership.is_responsible_for_group_membership) %]>
+                                                        <span class="selectgroup-button">Dependiente</span>
+                                                </label>
+                                        </div>
+                                </div>
+                        </div>
+                        <div class="col-sm-7"
+                                id="DIV-GROUP-MEMBERSHIP-RESPONSIBLE-CLIENT"
+                                [% IF !data.membership
+                                        || data.membership.is_responsible_for_group_membership
+                                        || data.membership.type_code == 'I' %]
+                                        style="display:none"[% END %]>
+                                <div class="form-group">
+                                        <label class="form-label" style="margin-bottom:16px">
+                                                Cliente responsable del pago de membres&iacute;a
+                                                <span class="text-red" style="font-size:16px">*</span>
+                                        </label>
+                                        <select name="membership_group_id" class="form-control custom-select"></select>
+                                </div>
+                        </div>
+                        [% IF data.membership.is_responsible_for_group_membership %]
+                                 <div class="col-sm-7" id="DIV-GROUP-DEPENDENTS"
+                                    [% IF !data.membership.is_responsible_for_group_membership %]style="display:none"[% END %]>
+                                        <div class="form-group">
+                                                <label class="form-label" style="margin-bottom:16px">
+                                                        Dependientes de esta membres&iacute;a
+                                                </label>
+                                                [% IF data.group.dependents.size %]
+                                                        [% FOREACH dep = data.group.dependents %]
+                                                                <i class="fe mr-2 fe-user-plus" aria-hidden="true"></i>
+                                                                [% dep.display_name %]
+                                                                <br>
+                                                        [% END %]
+                                                [% ELSE %]
+                                                        <div class="alert alert-info" role="alert">
+                                                                <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                                                No se han agregado dependientes de esta mebres&iacute;a.
+                                                        </div>
+                                                [% END %]
+                                        </div>
+                                </div>
+                        [% END %]
+                </div>
+                [% IF IS_INSERT && data.enrollments.size %]
+                        <div class="col-sm-12">
+                                <div class="form-group">
+                                        <label class="form-label">Cobro de inscripci&oacute;n</label>
+                                        <div class="custom-controls-stacked">
+                                                <label class="custom-control custom-radio custom-control-inline">
+                                                        <input type="radio"
+                                                                name="enrollment_item_id"
+                                                                value=""
+                                                                checked="checked"
+                                                                class="RADIO-ENROLLMENTS custom-control-input">
+                                                                <span class="custom-control-label">Ninguno</span>
+                                                </label>
+                                                [% FOREACH enroll = data.enrollments %]
+                                                        <label class="custom-control custom-radio custom-control-inline">
+                                                                <input type="radio"
+                                                                        name="enrollment_item_id"
+                                                                        value="[% enroll.id %]"
+                                                                        class="RADIO-ENROLLMENTS custom-control-input">
+                                                                        <span class="custom-control-label">
+                                                                                [% enroll.name %]
+                                                                                [% ttf.tip('Precio : $' _ ttf.escape(enroll.amount)) %]
+                                                                        </span>
+                                                        </label>
+                                                [% END %]
+                                        </div>
+                                </div>
+                        </div>
+                [% END %]
+
+                [% IF IS_UPDATE && data.pending_membership_charges.size %]
+                        <div class="col-sm-12" id="DIV-PENDING-MEMBERSHIP-CHARGES" style="display:none">
+                                <div class="row form-fieldset">
+                                        <div class="form-group">
+                                                <label class="form-label">
+                                                        Actualizar cobros de membres&iacute;a pendientes a la cantidad nueva : <span id="SPAN-NEW-MEMBERSHIP-AMOUNT"></span>
+                                                </label>
+                                                [% FOREACH dd = data.pending_membership_charges %]
+                                                        <label class="custom-control custom-checkbox">
+                                                                <input type="checkbox" class="custom-control-input" name="BOOL-PCH_[% dd.id %]">
+                                                                <span class="custom-control-label">[% dd.year %] &raquo; [% dd.display_month %] : $[% ttf.commify(dd.amount) %]</span>
+                                                        </label>
+                                                [% END %]
+                                        </div>
+                                </div>
+                        </div>
+                [% END %]
+
+        </div>
+        <div class="card-footer text-right">
+                <button type="submit" class="btn btn-primary">
+                        [% IF data.user.id %]
+                                [% IF IS_RENEWAL %]
+                                        Reactivar
+                                [% ELSE %]
+                                        Guardar
+                                [% END %]
+                        [% ELSE %]
+                                Agregar
+                        [% END %]
+                </button>
+        </div>
+</div>

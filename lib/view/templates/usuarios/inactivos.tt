@@ -1,0 +1,181 @@
+[% INCLUDE include/header/main.tt %]
+
+[% IF data.inactive || data.deleted_users.size %]
+        <div class="col-sm-6">
+                <div class="card p-3">
+                        <div class="d-flex align-items-center">
+                                <span class="stamp stamp-md bg-gray mr-3">
+                                        <i class="fe fe-users"></i>
+                                </span>
+                                <div>
+                                        <h4 class="m-0">
+                                                [% data.inactive.size || 0 %]
+                                        </h4>
+                                        <small class="text-muted">[% ttf.plural(data.inactive.size, 'Usuario deshabilitado', 'Usuarios deshabilitados') %]</small>
+                                </div>
+                        </div>
+                </div>
+        </div>
+        <div class="col-sm-6">
+                <div class="card p-3">
+                        <div class="d-flex align-items-center">
+                                <span class="stamp stamp-md bg-danger mr-3">
+                                        <i class="fe fe-users"></i>
+                                </span>
+                                <div>
+                                        <h4 class="m-0">
+                                                [% data.deleted_users.size || 0 %]
+                                        </h4>
+                                        <small class="text-muted">[% ttf.plural(data.deleted_users.size, 'Usuario eliminado', 'Usuarios eliminados') %]</small>
+                                </div>
+                        </div>
+                </div>
+        </div>
+        <div class="col-sm-12">
+                [% IF data.inactive %]
+                        <div class="card">
+                                <div class="card-status bg-gray"></div>
+                                <div class="card-header">
+                                        <h3 class="card-title">
+                                                [% IF p.fecha %][% p.fecha %] &raquo; [% END %]
+                                                Usuarios deshabilitados
+                                        </h3>
+                                        <div class="card-options" style="padding-top:15px">
+                                                <div class="form-group">
+                                                        <div class="input-group" style="margin-left:10px;height:28px">
+                                                                <span class="input-group-prepend">
+                                                                        <span class="input-group-text">
+                                                                                <i class="fe fe-search mr-1"></i>
+                                                                        </span>
+                                                                </span>
+                                                                <input type="text" data-search_table="table-disabled-users" class="table-search-input form-control" placeholder="Buscar">
+                                                                &nbsp;&nbsp;
+                                                        </div>
+                                                </div>
+                                        </div>
+                                </div>
+                                <div class="table-responsive">
+                                        <table id="table-disabled-users" class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                                <thead>
+                                                        <tr>
+                                                                <th class="w-1"></th>
+                                                                <th>Nombre</th>
+                                                                <th>Fecha</th>
+                                                                <th>Adeudo</th>
+                                                                <th></th>
+                                                        </tr>
+                                                </thead>
+                                                <tbody>
+                                                        [% FOREACH cc = data.inactive %]
+                                                                <tr>
+                                                                        <td class="w-1">
+                                                                                [% ttf.avatar(
+                                                                                        id => cc.id,
+                                                                                        has_profile_picture => cc.has_profile_picture,
+                                                                                        has_picture => cc.has_picture,
+                                                                                        name => cc.display_name ) %]
+                                                                        </td>
+                                                                        <td width="40%" class="table-search-col" >
+                                                                                [% SET CONTROLLER = cc.is_client ? 'clientes' : 'usuarios' %]
+                                                                                <a href="[% ttf.uri( c => CONTROLLER, m => 'perfil', id => cc.id ) %]" class="text-inherit">
+                                                                                        [% cc.display_name %]
+                                                                                </a>
+                                                                                <small class="d-block text-muted">
+                                                                                        [% IF cc.is_client %]
+                                                                                                [% cc.membership.name %]
+                                                                                        [% ELSE %]
+                                                                                                Staff
+                                                                                        [% END %]
+                                                                                </small>
+                                                                        </td>
+                                                                        <td>
+                                                                                [% cc.deactivation_date_time %]
+                                                                                <small class="d-block text-muted">
+                                                                                        [% cc.deactivation_display_admin %]
+                                                                                </small>
+                                                                        </td>
+                                                                        <td>
+                                                                                $[% ttf.commify(cc.debt.total || 0) %]
+                                                                        </td>
+                                                                        <td class="text-right">
+                                                                                [% IF cc.is_client %]
+                                                                                        <a href="[% ttf.uri( c => 'usuarios', m => 'confirmar_desactivacion', id => cc.id) %]" class="btn btn-sm btn-danger">
+                                                                                                Eliminar
+                                                                                        </a>
+                                                                                        &nbsp;
+                                                                                [% END %]
+                                                                                <a href="[% ttf.uri( c => 'usuarios', m => 'reactivar', id => cc.id) %]" class="btn btn-sm btn-success">
+                                                                                        Reactivar
+                                                                                </a>
+                                                                        </td>
+                                                                </tr>
+                                                        [% END %]
+                                                </tbody>
+                                        </table>
+                                </div>
+                        </div>
+                [% END %]
+                [% IF data.deleted_users.size %]
+                        <div class="card">
+                                <div class="card-status bg-danger"></div>
+                                <div class="card-header">
+                                        <h3 class="card-title">Usuarios eliminados</h3>
+                                        <div class="card-options" style="padding-top:15px">
+                                                <div class="form-group">
+                                                        <div class="input-group" style="margin-left:10px;height:28px">
+                                                                <span class="input-group-prepend">
+                                                                        <span class="input-group-text">
+                                                                                <i class="fe fe-search mr-1"></i>
+                                                                        </span>
+                                                                </span>
+                                                                <input type="text" data-search_table="table-deleted-users" class="table-search-input form-control" placeholder="Buscar">
+                                                                &nbsp;&nbsp;
+                                                        </div>
+                                                </div>
+                                        </div>
+                                </div>
+                                <div class="table-responsive">
+                                        <table id="table-deleted-users" class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                                <thead>
+                                                        <tr>
+                                                                <th class="w-1"></th>
+                                                                <th>Nombre</th>
+                                                                <th>Fecha</th>
+                                                                <th>Asistencias</th>
+                                                                <th>Adeudo</th>
+                                                        </tr>
+                                                </thead>
+                                                <tbody>
+                                                        [% FOREACH dd = data.deleted_users %]
+                                                                <tr>
+                                                                        <td class="w-1">
+                                                                                [% ttf.avatar( id => dd.id, name => dd.display_name ) %]
+                                                                        </td>
+                                                                        <td width="40%" class="table-search-col" >
+                                                                                [% dd.display_name %]
+                                                                        </td>
+                                                                        <td>
+                                                                                [% dd.date_time %]
+                                                                                <small class="d-block text-muted">
+                                                                                        [% dd.admin_display_name %]
+                                                                                        [% ttf.tip(dd.notes) %]
+                                                                                </small>
+                                                                        </td>
+                                                                        <td>[% dd.total_attendance_days || 0 %]</td>
+                                                                        <td>
+                                                                                $[% ttf.commify(dd.total_debt_amount || 0) %]
+                                                                                <small class="d-block text-muted">
+                                                                                        [% dd.membership_name %]
+                                                                                </small>
+                                                                        </td>
+                                                                </tr>
+                                                        [% END %]
+                                                </tbody>
+                                        </table>
+                                </div>
+                        </div>
+                [% END %]
+        </div>
+[% END %]
+
+[% INCLUDE include/footer.tt %]

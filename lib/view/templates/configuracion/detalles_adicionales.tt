@@ -1,0 +1,167 @@
+[% INCLUDE include/header/main.tt %]
+[% INCLUDE include/configuracion/menu.tt %]
+
+<div class="col">
+        [% INCLUDE 'include/configuracion/details-upsert.tt' %]
+</div>
+
+[% IF data.details.users.size || data.details.inventory.size %]
+
+<div class="col-sm-12">
+        <div class="page-header">
+                <h1 class="page-title">
+                        Detalles adicionales
+                </h1>
+        </div>
+</div>
+
+[% END %]
+
+[% IF data.details.users.size %]
+
+<div class="col-sm-12">
+
+        <div class="card">
+
+                <div class="card-status bg-green"></div>
+
+                <div class="card-header">
+                        <h3 class="card-title">Staff y clientes</h3>
+                        <div class="card-options">
+                                <a href="javascript:;" class="card-options-collapse" data-toggle="card-collapse"><i class="fe fe-chevron-up"></i></a>
+                        </div>
+                </div>
+
+                <div class="table-responsive">
+                        <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                <thead>
+                                        <tr>
+                                                <th class="w-1"></th>
+                                                <th class="w-1">Req.</th>
+                                                <th>Detalle</th>
+                                                <th width="30%">Tipo</th>
+                                                <th width="40%">Disponibilidad</th>
+                                        </tr>
+                                </thead>
+                                <tbody>
+                                        [% FOREACH dd = data.details.users %]
+                                                <tr>
+                                                        <td class="w-1">[% loop.count %].</td>
+                                                        <td class="w-1">[% ttf.gr(dd.required) %]</td>
+                                                        <td [% IF !dd.active %]style="text-decoration:line-through" class="text-muted"[% END %]>
+                                                                <a href="[% ttf.uri( c => 'configuracion', m => 'detalle', id => dd.id ) %]" class="text-inherit">
+                                                                        [% dd.name %]
+                                                                </a>
+                                                        </td>
+                                                        <td>
+                                                        [% dd.display_type %]
+                                                        [% IF dd.type_code == 'options' %]
+                                                                <small class="d-block item-except text-sm text-muted h-1x">
+                                                                        [% FOREACH oo = dd.options %]
+                                                                                [% oo %][% UNLESS loop.last %], [% END %]
+                                                                        [% END %]
+                                                                </small>
+                                                        [% END %]
+                                                        </td>
+                                                        <td>
+                                                                <div class="tags">
+                                                                        [% IF dd.for_staff %]
+                                                                                <div class="tag tag-green">
+                                                                                        Staff
+                                                                                        <span class="tag-addon">
+                                                                                                <i class="fe fe-user"></i>
+                                                                                        </span>
+                                                                                </div>
+                                                                        [% END %]
+                                                                        [% IF dd.for_clients %]
+                                                                                <div class="tag tag-green">
+                                                                                        Clientes
+                                                                                        <span class="tag-addon">
+                                                                                                <i class="fe fe-user"></i>
+                                                                                        </span>
+                                                                                </div>
+                                                                        [% END %]
+                                                                </div>
+                                                        </td>
+                                                </tr>
+                                        [% END %]
+                                </tbody>
+                        </table>
+                </div>
+        </div>
+</div>
+
+[% END %]
+
+[% IF data.details.inventory.size %]
+
+<div class="col-sm-12">
+
+        <div class="card">
+
+                <div class="card-status bg-grey"></div>
+
+                <div class="card-header">
+                        <h3 class="card-title">Inventario</h3>
+                        <div class="card-options">
+                                <a href="javascript:;" class="card-options-collapse" data-toggle="card-collapse"><i class="fe fe-chevron-up"></i></a>
+                        </div>
+                </div>
+
+                <div class="table-responsive">
+                        <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                <thead>
+                                        <tr>
+                                                <th class="w-1"></th>
+                                                <th class="w-1">Req.</th>
+                                                <th>Detalle</th>
+                                                <th width="30%">Tipo</th>
+                                                <th width="40%">Disponibilidad</th>
+                                        </tr>
+                                </thead>
+                                <tbody>
+                                        [% FOREACH dd = data.details.inventory %]
+                                                <tr>
+                                                        <td class="w-1">[% loop.count %].</td>
+                                                        <td class="w-1">[% ttf.gr(dd.required) %]</td>
+                                                        <td [% IF !dd.active %]style="text-decoration:line-through" class="text-muted"[% END %]>
+                                                                <a href="[% ttf.uri( c => 'configuracion', m => 'detalle', id => dd.id ) %]" class="text-inherit">
+                                                                        [% dd.name %]
+                                                                </a>
+                                                        </td>
+                                                        <td>
+                                                        [% dd.display_type %]
+                                                        [% IF dd.type_code == 'options' %]
+                                                                <small class="d-block item-except text-sm text-muted h-1x">
+                                                                        [% FOREACH oo = dd.options %]
+                                                                                [% oo %][% UNLESS loop.last %], [% END %]
+                                                                        [% END %]
+                                                                </small>
+                                                        [% END %]
+                                                        </td>
+                                                        <td>
+                                                                <div class="tags">
+                                                                        <div class="tag">
+                                                                                Inventario
+                                                                                <span class="tag-addon">
+                                                                                        <i class="fe fe-shopping-cart"></i>
+                                                                                </span>
+                                                                        </div>
+                                                                </div>
+                                                                <small class="d-block item-except text-sm text-muted h-1x">
+                                                                        [% FOREACH tt = dd.inventory_types.values.sort %]
+                                                                                [% tt %][% UNLESS loop.last %], [% END %]
+                                                                                [% END %]
+                                                                </small>
+                                                        </td>
+                                                </tr>
+                                        [% END %]
+                                </tbody>
+                        </table>
+                </div>
+        </div>
+</div>
+
+[% END %]
+
+[% INCLUDE include/footer.tt %]

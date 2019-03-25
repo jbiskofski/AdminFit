@@ -1,0 +1,123 @@
+[% INCLUDE include/header/main.tt %]
+
+<div class="col-sm-9">
+        [% INCLUDE include/membresias/upsert.tt %]
+</div>
+
+<div class="col-sm-3">
+
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-yellow mr-3">
+                                <i class="fe fe-user"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">
+                                        [% data.enrollments.size || 0 %]
+                                        <small class="d-block text-muted">[% ttf.plural(data.enrollments.size, 'Inscripci&oacute;n', 'Inscripciones') %]</small>
+                                </h4>
+                        </div>
+                </div>
+        </div>
+
+        [% IF data.membership.type_code == 'G' %]
+                <div class="card p-3">
+                        <div class="d-flex align-items-center">
+                                <span class="stamp stamp-md bg-red mr-3">
+                                        <i class="fe fe-users"></i>
+                                </span>
+                                <div>
+                                        <h4 class="m-0">
+                                                [% data.dependent_count %]
+                                                <small class="d-block text-muted">[% ttf.plural(data.dependent_count, 'Dependiente', 'Dependientes') %]</small>
+                                        </h4>
+                                </div>
+                        </div>
+                </div>
+        [% END %]
+
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-green mr-3">
+                                <i class="fe fe-dollar-sign"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">
+                                        $[% ttf.commify(data.membership.amount * data.enrollments.size) %]
+                                </h4>
+                                <small class="d-block text-muted">Ingresos mensuales</small>
+                        </div>
+                </div>
+        </div>
+
+</div>
+
+[% IF data.enrollments.size %]
+
+        <div class="col-sm-12">
+                <div class="page-header">
+                        <h1 class="page-title">
+                                Inscripciones
+                        </h1>
+                </div>
+        </div>
+
+        <div class="col-sm-12">
+                <div class="card">
+                        <div class="card-status bg-green"></div>
+                        <div class="card-header">
+                                <h3 class="card-title">[% data.membership.name %]</h3>
+                        </div>
+                        <div class="table-responsive">
+                                <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                        <thead>
+                                                <tr>
+                                                        <th class="w-1"></th>
+                                                        <th colspan="2">Cliente</th>
+                                                        [% IF data.membership.type_code == 'G' %]
+                                                                <th colspan="2">Dependientes</th>
+                                                        [% END %]
+                                                </tr>
+                                        </thead>
+                                        <tbody>
+                                                [% FOREACH aa = data.enrollments %]
+                                                        [% NEXT IF data.membership.type_code == 'G' && !aa.is_responsible_for_group_membership %]
+                                                        <tr>
+                                                                <td class="w-1">[% loop.count %].</td>
+                                                                <td class="w-1">
+                                                                        [% ttf.avatar(
+                                                                                id => aa.client_id,
+                                                                                has_profile_picture => aa.has_profile_picture,
+                                                                                has_picture => aa.has_picture,
+                                                                                name => aa.display_client_name ) %]
+                                                                </td>
+                                                                <td>
+                                                                        <a href="[% ttf.uri( c => 'clientes', m => 'perfil', id => aa.client_id ) %]" class="text-inherit">
+                                                                                [% aa.display_client_name %]
+                                                                        </a>
+                                                                </td>
+                                                                [% IF data.membership.type_code == 'G' %]
+                                                                        <td>
+                                                                                [% FOREACH dep = aa.dependents %]
+                                                                                        <a href="[% ttf.uri( c => 'clientes', m => 'perfil', id => dep.id ) %]" class="text-inherit">
+                                                                                                <i class="fe fe-user-plus"></i>
+                                                                                                [% dep.display_name %]
+                                                                                        </a>
+                                                                                        <br>
+                                                                                [% END %]
+                                                                        </td>
+                                                                        <td align="right">
+                                                                                <a href="[% ttf.uri( c => 'membresias', m => 'grupo', id => aa.membership_group_id ) %]" class="btn btn-secondary btn-sm">Administrar grupo</a>
+                                                                        </td>
+                                                                [% END %]
+                                                        </tr>
+                                                [% END %]
+                                        </tbody>
+                                </table>
+                        </div>
+                </div>
+        </div>
+
+[% END %]
+
+[% INCLUDE include/footer.tt %]

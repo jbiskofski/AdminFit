@@ -1,0 +1,195 @@
+[% INCLUDE include/header/main.tt %]
+
+<script>
+require(['jquery'], function($) {
+
+        $(document).ready( function() {
+                $(".I-SHOW-DELETE-FORM").click( function() {
+                        var DELETE_ID = $(this).data("delete_id");
+                        $(this).remove();
+                        $("#DELETE-FORM-" + DELETE_ID).fadeIn();
+                })
+
+                $(".A-SHOW-ALL-VISITS").click( function(){
+                        var CLIENT_ID = $(this).data("client_id");
+                        $("#DIV-ATTENDANCE-" + CLIENT_ID).fadeIn();
+                        $(this).remove();
+                });
+        });
+
+});
+</script>
+
+<div class="col-sm-3">
+        <div id="DIV-SIDE-FACTS-PINNED">
+                <div class="page-header" style="margin-top:0px !important">
+                        <div class="h1 page-title" style="width:100%;text-align:right">
+                                Asistencia
+                                <br>
+                                [% IF p.start_date && p.end_date %]
+                                        [% p.start_date %] &raquo; [% p.end_date %]
+                                [% ELSIF p.fecha %]
+                                        [% p.fecha %]
+                                [% END %]
+                        </div>
+                </div>
+
+                <div class="p-0" style="margin-bottom:34px">
+                        <div class="form-label text-right">B&uacute;squeda entre fechas&nbsp;&nbsp;</div>
+                        <form action="[% ttf.uri( c => 'asistencia', m => 'resumen' ) %]" method="get">
+                                <input type="hidden" name="start_date" value="">
+                                <input type="hidden" name="end_date" value="">
+                                <div class="input-group">
+                                        <input id="daterange" class="form-control text-right">
+                                        <span class="input-group-append">
+                                                <span class="input-group-text"><i class="fe fe-calendar"></i></span>
+                                        </span>
+                                </div>
+                        </form>
+                </div>
+                <div class="card p-3">
+                        <div class="d-flex align-items-center">
+                                <span class="stamp stamp-md bg-green mr-3">
+                                        <i class="fe fe-check"></i>
+                                </span>
+                                <div>
+                                        <h4 class="m-0">[% data.totals.days || 0 %]</h4>
+                                        <small class="d-block text-muted">
+                                                [% ttf.plural(data.totals.days, 'Asistencia', 'Asistencias') %]
+                                        </small>
+                                </div>
+                        </div>
+                </div>
+                [% IF data.totals.visits > data.totals.days %]
+                        <div class="card p-3">
+                                <div class="d-flex align-items-center">
+                                        <span class="stamp stamp-md bg-red mr-3">
+                                                <i class="fe fe-check-square"></i>
+                                        </span>
+                                        <div>
+                                                <h4 class="m-0">[% data.totals.visits %]</h4>
+                                                <small class="d-block text-muted">
+                                                        [% ttf.plural(data.totals.days, 'Visita', 'Visitas') %] totales
+                                                </small>
+                                        </div>
+                                </div>
+                        </div>
+                [% END %]
+                [% IF data.totals.cancelled > 0 %]
+                        <div class="card p-3">
+                                <div class="d-flex align-items-center">
+                                        <span class="stamp stamp-md bg-orange mr-3">
+                                                <i class="fe fe-x"></i>
+                                        </span>
+                                        <div>
+                                                <h4 class="m-0">[% data.totals.cancelled %]</h4>
+                                                <small class="d-block text-muted">
+                                                        [% ttf.plural(data.totals.cancelled, 'Cancelaci&oacute;n', 'Cancelaciones') %]
+                                                </small>
+                                        </div>
+                                </div>
+                        </div>
+                [% END %]
+        </div>
+</div>
+
+<div class="col-sm-9">
+        <div class="row">
+                <div class="col-sm-12">
+                        <div class="card">
+                                <div class="card-status bg-red"></div>
+                                <div class="card-header">
+                                        <h3 class="card-title">
+                                                [% IF data.multi_day_search %]
+                                                        Visitas por d&iacute;a
+                                                [% ELSE %]
+                                                        Visitas por hora &raquo; [% p.fecha %]
+                                                [% END %]
+                                        </h3>
+                                </div>
+                                [% IF data.attendance.size %]
+                                        [% IF data.charts.attendance %]
+                                                <div id="DIV-ATTENDANCE-CHART" style="height:10rem;max-height:160px;position:relative;" class="c3"></div>
+                                                [% data.charts.attendance %]
+                                        [% END %]
+                                        <div class="table-responsive">
+                                                <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                                        <thead>
+                                                                <tr>
+                                                                        <th class="w-1"></th>
+                                                                        <th class="w-1"></th>
+                                                                        <th width="40%">Cliente</th>
+                                                                        <th class="text-right">Visitas</th>
+                                                                </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                                [% FOREACH hh = data.attendance %]
+                                                                        <tr>
+                                                                                <td>[% loop.count %].</td>
+                                                                                <td><i class="text-red fe fe-check"></i></td>
+                                                                                <td width="40%">
+                                                                                        [% SET CONTROLLER = hh.is_client ? 'clientes' : 'usuarios' %]
+                                                                                        <a href="[% ttf.uri(c => CONTROLLER, m => 'perfil', id => hh.client_id) %]" class="text-inherit">
+                                                                                                [% hh.display_client_name %]
+                                                                                        </a>
+                                                                                </td>
+                                                                                <td align="right">
+                                                                                        [% IF hh.times.size > 1 %]
+                                                                                                <a href="javascript:;" class="A-SHOW-ALL-VISITS text-muted small text-inherit no-underline" data-client_id="[% hh.client_id %]" style="margin-right:8px">
+                                                                                                        [% hh.times.size %] Visitas
+                                                                                                        <i class="fe fe-plus text-green"></i>
+                                                                                                </a>
+                                                                                        [% END %]
+                                                                                        <div id="DIV-ATTENDANCE-[% hh.client_id %]" [% IF hh.times.size > 1 %]style="display:none"[% END %]>
+                                                                                                [% FOREACH time = hh.times %]
+                                                                                                        <small class="text-muted [% IF time.cancelled %]amount-paid text-red[% END %]">
+                                                                                                                [% IF time.date %][% time.date %] - [% END %][% time.time %]
+                                                                                                                [% UNLESS time.cancelled %]
+                                                                                                                        <a href="javascript:;" data-delete_id="[% time.id %]" class="I-SHOW-DELETE-FORM no-underline"><i class="fe fe-x mr-1 text-red"></i></a>
+                                                                                                                [% END %]
+                                                                                                        </small>
+                                                                                                        [% IF time.cancelled %]
+                                                                                                                [% SET TIP_TEXT = time.display_cancelled_name %]
+                                                                                                                [% IF time.cancelled_notes %][% TIP_TEXT = TIP_TEXT _ '<br>' _ time.cancelled_notes %][% END %]
+                                                                                                                [% ttf.tip(TIP_TEXT, color => 'red') %]
+                                                                                                        [% END %]
+                                                                                                        [% UNLESS time.cancelled %]
+                                                                                                                <div id="DELETE-FORM-[% time.id %]" style="display:none">
+                                                                                                                        <form method="post" action="[% ttf.uri( c => 'asistencia', m => 'delete-do', id => time.id ) %]">
+                                                                                                                                <input type="hidden" name="id" value="[% time.id %]">
+                                                                                                                                <input type="hidden" name="fecha" value="[% p.fecha %]">
+                                                                                                                                <input type="hidden" name="start_date" value="[% p.start_date %]">
+                                                                                                                                <input type="hidden" name="end_date" value="[% p.end_date %]">
+                                                                                                                                <div class="form-group">
+                                                                                                                                        <textarea name="notes" rows="2" class="form-control" placeholder="Notas" style="width:90%"></textarea>
+                                                                                                                                </div>
+                                                                                                                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                                                                                                        <i class="fe fe-x mr-1"></i>
+                                                                                                                                        Eliminar asistencia
+                                                                                                                                </button>
+                                                                                                                        </form>
+                                                                                                                </div>
+                                                                                                        [% END %]
+                                                                                                        <br>
+                                                                                                [% END %]
+                                                                                        </div>
+                                                                                </td>
+                                                                        </tr>
+                                                                [% END %]
+                                                        </tbody>
+                                                </table>
+                                        </div>
+                                [% ELSE %]
+                                        <div class="card-body">
+                                                <div class="alert alert-info" role="alert">
+                                                        <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                                        <b>No se han encontrado registros de asistenc&iacute;as.</b>
+                                                </div>
+                                        </div>
+                                [% END %]
+                        </div>
+                </div>
+        </div>
+</div>
+
+[% INCLUDE include/footer.tt %]

@@ -1,0 +1,7 @@
+[% INCLUDE include/header/main.tt %]
+        [% IF data.memberships %]
+                <div class="col-sm-12">
+                        [% INCLUDE include/usuarios/upsert.tt IS_CLIENT_UPSERT=1 IS_INSERT=1 %]
+                </div>
+        [% END %]
+[% INCLUDE include/footer.tt %]

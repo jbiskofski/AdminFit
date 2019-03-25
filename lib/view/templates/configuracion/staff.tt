@@ -1,0 +1,65 @@
+[% INCLUDE include/header/main.tt %]
+[% INCLUDE include/configuracion/menu.tt %]
+
+<div class="col">
+        <div class="card">
+                <div class="card-status bg-blue"></div>
+                <div class="card-header">
+                        <h3 class="card-title">Staff</h3>
+                        <div class="card-options">
+                                <a href="[% ttf.uri( c => 'usuarios', m => 'agregar' ) %]" class="btn btn-primary btn-sm">
+                                        <i class="fe fe-plus mr-2"></i>
+                                        Agregar
+                                </a>
+                        </div>
+                </div>
+                <div class="table-responsive">
+                        <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                <thead>
+                                        <tr>
+                                                <th class="w-1"></th>
+                                                <th colspan="2">Nombre</th>
+                                                <th>Actividades</th>
+                                        </tr>
+                                </thead>
+                                <tbody>
+                                        [% FOREACH uu = data.staff %]
+                                                <tr>
+                                                        <td class="w-1">[% loop.count %].</td>
+                                                        <td class="w-1">
+                                                                [% ttf.avatar(
+                                                                        id => uu.id,
+                                                                        has_profile_picture => uu.has_profile_picture,
+                                                                        has_picture => uu.has_picture,
+                                                                        name => uu.display_name ) %]
+                                                        </td>
+                                                        <td>
+                                                                <a href="[% ttf.uri( c => 'usuarios', m => 'perfil', id => uu.id ) %]" class="text-inherit">
+                                                                        [% uu.display_name %]
+                                                                </a>
+                                                        </td>
+                                                        <td>
+                                                                <div class="tags">
+                                                                        [% IF uu.is_admin %]
+                                                                                <div class="tag tag-danger">
+                                                                                        Admin
+                                                                                        <span class="tag-addon"><i class="fe fe-tag"></i></span>
+                                                                                </div>
+                                                                        [% END %]
+                                                                        [% IF uu.is_coach %]
+                                                                                <div class="tag tag-green">
+                                                                                        Entrenador
+                                                                                        <span class="tag-addon"><i class="fe fe-tag"></i></span>
+                                                                                </div>
+                                                                        [% END %]
+                                                                </div>
+                                                        </td>
+                                                </tr>
+                                        [% END %]
+                                </tbody>
+                        </table>
+                </div>
+        </div>
+</div>
+
+[% INCLUDE include/footer.tt %]

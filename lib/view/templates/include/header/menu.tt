@@ -1,0 +1,65 @@
+[% SET
+        ACTIVE_MAP = {
+                'clientes/agregar'                      => 'CLIENTS',
+                'clientes/default'                      => 'CLIENTS',
+                'clientes/perfil'                       => 'CLIENTS',
+                'clientes/actualizar'                   => 'CLIENTS',
+                'finanzas/estado_de_cuenta'             => 'CLIENTS',
+                'ventas/default'                        => 'VENTAS',
+                'ventas/ver'                            => 'VENTAS',
+                'ventas/punto_de_venta'                 => 'VENTAS',
+                'ventas/historial_de_inventario'        => 'VENTAS',
+                'finanzas/cobro'                        => 'VENTAS',
+        }
+%]
+
+[% SWITCH ACTIVE_MAP.${cfg.ACCESSING} %]
+[% CASE 'CLIENTS' %]
+        [% CLIENTS_ACTIVE = 'active' %]
+[% CASE 'VENTAS' %]
+        [% VENTAS_ACTIVE = 'active' %]
+[% CASE %]
+        [% START_ACTIVE = 'active' %]
+[% END %]
+
+<!-- BEGIN INCLUDE/HEADER/MENU -->
+<div class="header collapse d-lg-flex p-0" id="headerMenuCollapse" [% IF cfg.DEVEL_MODE %]style="border-bottom:dashed 2px red"[% END %]>
+        <div class="container">
+                <div class="row align-items-center">
+                        <div class="col-sm-4 ml-auto">
+                                <div class="input-icon my-3 my-lg-1">
+                                        <input id="INPUT-HEADER-SEARCH" data-customer="[% cfg.CUSTOMER %]" class="form-control header-search" placeholder="Buscar">
+                                        <div class="input-icon-addon"><i class="fe fe-search"></i></div>
+                                </div>
+                        </div>
+                        <div class="col-lg order-lg-first">
+                                <ul class="nav nav-tabs border-0 flex-column flex-lg-row">
+                                        <li class="nav-item">
+                                                <a href="[% ttf.uri( c => 'inicio', m => 'default' ) %]" class="nav-link [% START_ACTIVE %]"><i class="fe fe-home"></i> Inicio</a>
+                                        </li>
+                                        <li class="nav-item">
+                                                <a href="[% ttf.uri( c => 'clientes', m => 'default' ) %]" class="nav-link [% CLIENTS_ACTIVE %]"><i class="fe fe-users"></i> Clientes</a>
+                                        </li>
+                                        <li class="nav-item">
+                                                <a href="[% ttf.uri( c => 'ventas', m => 'default' ) %]" class="nav-link [% VENTAS_ACTIVE %]"><i class="fe fe-shopping-cart"></i> Ventas</a>
+                                        </li>
+                                        <li class="nav-item dropdown">
+                                                <a href="javascript:;" class="nav-link [% WODS_ACTIVE %]" data-toggle="dropdown"><i class="fe fe-calendar"></i> WODs</a>
+                                                <div class="dropdown-menu dropdown-menu-arrow">
+                                                        <a href="[% ttf.uri( c => 'wods', m => 'mes' ) %]" class="dropdown-item ">Mes</a>
+                                                        <a href="[% ttf.uri( c => 'wods', m => 'resultados' ) %]" class="dropdown-item ">Resultados</a>
+                                                        <a href="[% ttf.uri( c => 'wods', m => 'programacion' ) %]" class="dropdown-item ">Programaci&oacute;n</a>
+                                                </div>
+                                        </li>
+                                        <li class="nav-item">
+                                                <a href="javascript:;" class="nav-link"><i class="fe fe-grid"></i> Tableros</a>
+                                        </li>
+                                        <li class="nav-item">
+                                                <a href="javascript:;"  class="nav-link"><i class="fe fe-award"></i> Competencias</a>
+                                        </li>
+                                </ul>
+                        </div>
+                </div>
+        </div>
+</div>
+<!-- END INCLUDE/HEADER/MENU -->

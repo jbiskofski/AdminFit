@@ -1,0 +1,199 @@
+[% INCLUDE include/header/main.tt %]
+
+<div class="col">[% INCLUDE include/ventas/upsert.tt %]</div>
+
+<div class="col-sm-4">
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        [% IF data.product.use_inventory %]
+                                [% IF data.product.inventory.TOTAL %]
+                                        <span class="stamp stamp-md bg-blue mr-3">
+                                                <i class="fe fe-shopping-cart"></i>
+                                        </span>
+                                        <div>
+                                                <h4 class="m-0">
+                                                        [% data.product.inventory.TOTAL %]
+                                                </h4>
+                                                <small class="text-muted">Disponibilidad de inventario.</small>
+                                        </div>
+                                [% ELSE %]
+                                        <span class="stamp stamp-md bg-red mr-3">
+                                                <i class="fe fe-x"></i>
+                                        </span>
+                                        <div>
+                                                <h4 class="m-0">0</h4>
+                                                <small class="text-muted">Disponibilidad de inventario.</small>
+                                        </div>
+                                [% END %]
+                        [% ELSE %]
+                                <span class="stamp stamp-md bg-grey mr-3">
+                                        <i class="fe fe-message-circle"></i>
+                                </span>
+                                <div>
+                                        <small class="text-muted">Este producto no lleva control de inventario.</small>
+                                </div>
+                        [% END %]
+                </div>
+        </div>
+
+        [% IF data.product.is_permanent %]
+                <div class="card p-3">
+                        <div class="alert alert-info" role="alert">
+                                <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                <b>Adeudo general.</b>
+                                <br>
+                                <br>
+                                El adeudo general sirve para agregar adeudos previos. Por ejemplo, cuando empiezas a utilizar
+                                AdminFit y quieres importar los adeudos existentes de tus clientes.
+                                <br>
+                                <br>
+                                El adeudo general no puede ser modificado o deshabilitado.
+                        </div>
+                </div>
+        [% END %]
+
+        [% IF data.product.use_inventory %]
+                <div class="card card-collapsed">
+                        <div class="card-status bg-green"></div>
+                        <div class="card-header">
+                                <h4 class="card-title">Agregar inventario</h4>
+                                <div class="card-options">
+                                        <a href="#" class="card-options-collapse" data-toggle="card-collapse"><i class="fe fe-chevron-up"></i></a>
+                                </div>
+                        </div>
+                        <div class="card-alert alert mb-0" id="FORM-STATUS-add_inventory_do" style="display:none"></div>
+                        <div class="col-sm-12">
+                                <form name="add_inventory_do" method="post" action="[% ttf.uri( c => 'ventas', m => 'add-inventory-do') %]">
+                                        <input type="hidden" name="id" value="[% p.id %]">
+                                        <div class="form-group">
+                                                <br>
+                                                <label class="form-label">Cantidad de articulos</label>
+                                                <input type="text" name="count" onkeypress="return __ADMINFIT__.numbers_only(this, event)" class="form-control INPUT-ADD-INVENTORY" style="text-align:right" maxlength="4" placeholder="Agregar inventario">
+                                        </div>
+                                        <div class="form-group">
+                                                <label class="form-label">Notas</label>
+                                                <textarea name="notes" rows="2" class="form-control" placeholder="Notas"></textarea>
+                                        </div>
+                                        <div class="form-group text-right">
+                                                <button type="submit" style="margin-top:10px;margin-bottom:10px" class="pull-right btn btn-success ml-auto">Agregar inventario</button>
+                                        </div>
+                                </form>
+                                [% v.pre_add_inventory_do %]
+                        </div>
+                </div>
+        [% END %]
+
+        [% IF data.product.use_inventory %]
+                [% IF data.product.inventory.TOTAL %]
+                        <div class="card card-collapsed">
+                                <div class="card-status bg-danger"></div>
+                                <div class="card-header">
+                                        <h4 class="card-title">Restar inventario</h4>
+                                        <div class="card-options">
+                                                <a href="#" class="card-options-collapse" data-toggle="card-collapse"><i class="fe fe-chevron-up"></i></a>
+                                        </div>
+                                </div>
+                                <div class="card-alert alert mb-0" id="FORM-STATUS-remove_inventory_do" style="display:none"></div>
+                                <div class="col-sm-12">
+                                        <form name="remove_inventory_do" method="post" action="[% ttf.uri( c => 'ventas', m => 'remove-inventory-do') %]">
+                                                <input type="hidden" name="id" value="[% p.id %]">
+                                                <div class="form-group">
+                                                        <br>
+                                                        <label class="form-label">Cantidad de articulos</label>
+                                                        <input type="text" name="count" onkeypress="return __ADMINFIT__.numbers_only(this, event)" class="form-control INPUT-ADD-INVENTORY" style="text-align:right" maxlength="4" placeholder="Restar inventario">
+                                                        <small class="text-muted text-right pull-right">
+                                                        M&aacute;ximo : [% data.product.inventory.TOTAL %]
+                                                        <br>
+                                                </small>
+                                                </div>
+                                                <div class="form-group">
+                                                        <label class="form-label">Notas</label>
+                                                        <textarea name="notes" rows="2" class="form-control" placeholder="Notas"></textarea>
+                                                </div>
+                                                <div class="form-group">
+                                                        <button type="submit" style="margin-top:10px;margin-bottom:10px" class="pull-right btn btn-danger ml-auto">Restar inventario</button>
+                                                </div>
+                                        </form>
+                                        [% v.pre_remove_inventory_do('remove_inventory_do') %]
+                                </div>
+                        </div>
+                [% END %]
+        [% END %]
+
+</div>
+
+[% IF data.history.size %]
+        <div class="col-sm-12">
+                <div class="page-header">
+                        <h1 class="page-title">&Uacute;ltimos 10 movimientos de inventario</h1>
+                </div>
+        </div>
+        [% INCLUDE 'include/ventas/history.tt', TRUNCATE => 10 %]
+[% END %]
+
+[% IF data.debts.clients.size %]
+        <div class="col-sm-12">
+                <div class="page-header">
+                        <h1 class="page-title">Adeudos</h1>
+                </div>
+        </div>
+        <div class="col-sm-12">
+                <div class="card">
+                        <div class="card-status bg-red"></div>
+                        <div class="table-responsive">
+                                <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                        <thead>
+                                                <tr>
+                                                        <th class="w-1"></th>
+                                                        <th class="w-1"></th>
+                                                        <th>Nombre</th>
+                                                        <th class="text-right">Adeudo</th>
+                                                </tr>
+                                        </thead>
+                                        <tbody>
+                                                [% FOREACH dd = data.debts.clients %]
+                                                        <tr>
+                                                                <td width="1"><b>[% loop.count %].</b></td>
+                                                                <td class="w-1">
+                                                                        [% ttf.avatar(
+                                                                                id => dd.client_id,
+                                                                                has_profile_picture => dd.has_profile_picture,
+                                                                                has_picture => dd.has_picture,
+                                                                                name => dd.display_name ) %]
+                                                                </td>
+                                                                <td>
+                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => dd.client_id ) %]" class="text-inherit">
+                                                                                 [% dd.display_name %]
+                                                                        </a>
+                                                                </td>
+                                                                <td class="text-right">
+                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => dd.client_id ) %]" class="text-inherit">
+                                                                                $[% ttf.commify( dd.debt || 0 ) %]
+                                                                        </a>
+                                                                </td>
+                                                        </tr>
+                                                [% END %]
+                                        </tbody>
+                                        <tfoot class="table-danger h5">
+                                                <tr>
+                                                        <td colspan="3">&nbsp;</td>
+                                                        <td class="text-right">$[% ttf.commify(data.debts.total || 0) %]</td>
+                                                </tr>
+                                        </tfoot>
+                                </table>
+                        </div>
+                        [% IF TRUNCATE && SHOW_MORE %]
+                                <div class="card-footer">
+                                        <a href="[%ttf.uri( c => 'ventas', m => 'historial', id => p.id ) %]"
+                                                style="margin-top:10px;margin-bottom:10px"
+                                                class="pull-right btn btn-yellow ml-auto">
+                                                Ver movimientos anteriores
+                                        </a>
+                                </div>
+                        [% END %]
+                </div>
+        </div>
+[% END %]
+
+
+[% INCLUDE include/footer.tt %]

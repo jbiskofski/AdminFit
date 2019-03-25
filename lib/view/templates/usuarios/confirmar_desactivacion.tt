@@ -1,0 +1,71 @@
+[% INCLUDE include/header/main.tt %]
+
+<div class="col-sm-12">
+
+        <br>
+        <h1 class="page-title"><i class="fe fe-user"></i>[% data.user.display_name %]</h1>
+
+        [% IF data.user.is_client %]
+                [% IF data.user.active %]
+                        <div class="alert alert-warning col-sm-12" role="alert">
+                                <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                <b>Desactivar cliente</b>
+                                <br><br>
+                                Al desactivar un cliente su membres&iacute;a ya no ser&aacute; cobrada automaticamente cada mes, tampoco ser&aacute; posible
+                                registrar su asistencia, resultados, etc.
+                                <br>
+                                Esta opci&oacute;n es &uacute;til cuando temporalmente un cliente va a dejar de asistir al gimnasio. Por ejemplo si sale de vacaciones.
+                                <br>
+                                En un futuro cuando el cliente vuelva puedes establecer una fecha nueva de renovaci&oacute;n de membres&iacute;a.
+                                <br>
+                                <br>
+                                <a href="[% ttf.uri( c => 'usuarios', m => 'desactivar-usuario-do', id => p.id ) %]" class="btn btn-orange pull-right">
+                                        <i class="fe fe-clock mr-2"></i>
+                                        Desactivar cliente
+                                </a>
+                        </div>
+                [% END %]
+                <div class="alert alert-danger col-sm-12" role="alert">
+                        <div>
+                                <i class="fe fe-trash-2 mr-2" aria-hidden="true"></i>
+                                <b>Eliminaci&oacute;n de cliente</b>
+                                <br><br>
+                                Esta opci&oacute;n eliminar&aacute; toda la informaci&oacute;n del cliente.
+                                <br><br>
+                                <ul>
+                                        <li>Adeudos</li>
+                                        <li>Pagos</li>
+                                        <li>Asistencia</li>
+                                        <li>Resultados</li>
+                                        <li>Etc.</li>
+                                </ul>
+                                Esta acci&oacute;n es final e irreversible.
+                                <div style="width:30%;margin-top:20px">
+                                        <form method="post" action="[% ttf.uri( c => 'usuarios', m => 'eliminar-cliente-do' ) %]">
+                                                <input type="hidden" name="id" value="[% p.id %]">
+                                                <textarea name="notes" rows="3" class="form-control" placeholder="Notas"></textarea>
+                                                <button type="submit" style="margin-top:10px" class="btn btn-danger pull-right">
+                                                        <i class="fe fe-trash-2 mr-2"></i>
+                                                        Eliminar cliente por completo
+                                                </button>
+                                        </form>
+                                </div>
+                        </div>
+                </div>
+        [% ELSIF data.user.active %]
+                <div class="alert alert-warning col-sm-12" role="alert">
+                        <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                <b>Desactivar miembro de staff</b>
+                                <br><br>
+                                Al desactivar un miembro de staff, esta persona ya no podra realizar ninguna acci&oacute;n en el sistema.
+                        <br>
+                        <br>
+                        <a href="[% ttf.uri( c => 'usuarios', m => 'desactivar-usuario-do', id => p.id ) %]" class="btn btn-orange pull-right">
+                                <i class="fe fe-clock mr-2"></i>
+                                Desactivar usuario
+                        </a>
+                </div>
+        [% END %]
+</div>
+
+[% INCLUDE include/footer.tt %]

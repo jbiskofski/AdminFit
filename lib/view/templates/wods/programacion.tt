@@ -1,0 +1,215 @@
+[% INCLUDE include/header/main.tt %]
+
+<script>
+require(['jquery'], function($) {
+
+        $(document).ready( function() {
+
+                $("#OO-EXERCISE").change( function() {
+                        var ASK_METRIC = parseInt( $("#OO-EXERCISE option:selected").data("ask_metric") ) ? true : false;
+                        $("#INPUT-METRIC-MALE").val('');
+                        $("#INPUT-METRIC-FEMALE").val('');
+                        if ( ASK_METRIC ) {
+                                $(".ASK-METRIC").show();
+                        }
+                        else {
+                                $(".ASK-METRIC").hide();
+                        }
+                });
+
+                $("#BTN-ADD-EXERCISE").click( function() {
+                        _add_exercise_tag();
+                });
+
+                $("#DIV-TAG-LIST").on("click", "a.A-TAG-X", function() {
+                        var TAG_ID = $(this).parents("span.tag").attr("id");
+                        $("#DIV-TAG-LIST span#" + TAG_ID).remove();
+                });
+
+        });
+
+        function _add_exercise_tag() {
+
+                var ID = $("#OO-EXERCISE option:selected").val();
+
+                if ( ID.length === 0 ) {
+                        return false;
+                }
+
+                var NAME = $("#OO-EXERCISE option:selected").text();
+                var UUID = __ADMINFIT__.uuid();
+
+                var ASK_METRIC = parseInt( $("#OO-EXERCISE option:selected").data("ask_metric") ) ? true : false;
+                var METRIC_SPAN = '&nbsp;';
+                var MALE_METRIC = 0;
+                var FEMALE_METRIC = 0;
+
+                if ( ASK_METRIC ) {
+
+                        MALE_METRIC = parseInt( $("#INPUT-METRIC-MALE").val() );
+                        FEMALE_METRIC = parseInt ( $("#INPUT-METRIC-FEMALE").val() );
+
+                        if ( isNaN(MALE_METRIC) || isNaN(FEMALE_METRIC) ) {
+                                __ADMINFIT__.display_error("Es necesario especificar un m&eacute;trico para hombres y mujeres.", null, 'default' );
+                                return false;
+                        }
+
+                        METRIC_SPAN = `
+                                <span style="margin-left:1rem">
+                                        <i class="fa fa-male text-blue" style="margin-right:2px"></i>
+                                        ${MALE_METRIC}
+                                        <i class="fa fa-female text-pink" style="margin-left:4px;margin-right:2px"></i>
+                                        ${FEMALE_METRIC}
+                                </span>`;
+                }
+
+                var EXERCISE_TAG = `
+                        <span class="tag"
+                                id="TAG-EXERCISE-${UUID}"
+                                data-exercise_id="${ID}"
+                                data-male_metric="${MALE_METRIC}"
+                                data-female_metric="${FEMALE_METRIC}">
+                                ${NAME}
+                                ${METRIC_SPAN}
+                                <a class="tag-addon A-TAG-X">
+                                        <i class="fe fe-x"></i>
+                                </a>
+                        </span>`;
+
+                $("#DIV-TAG-LIST").append(EXERCISE_TAG);
+                $("#OO-EXERCISE").val($("#OO-EXERCISE option:first").val()).trigger("change");
+
+        }
+
+});
+
+function check_exercises() {
+
+        if ( $("#DIV-TAG-LIST span.tag").size() === 0 ) return false;
+
+        var ITEMS = [];
+        $("#DIV-TAG-LIST span.tag").each( function(i, SPAN) {
+                var EXERCISE_ID = $(SPAN).data("exercise_id");
+                var MALE_METRIC = parseInt( $(SPAN).data("male_metric") );
+                var FEMALE_METRIC = parseInt( $(SPAN).data("female_metric") );
+                ITEMS.push({
+                        exercise_id : EXERCISE_ID,
+                        male_metric : MALE_METRIC,
+                        female_metric : FEMALE_METRIC,
+                });
+        });
+
+        var JSON_STRING = JSON.stringify(ITEMS);
+        $("#JSON-EXERCISE-ITEMS").val(JSON_STRING);
+
+        return true;
+
+}
+
+</script>
+
+<div class="col-sm-6">
+        <div class="card">
+                <div class="card-status bg-blue"></div>
+                <div class="card-header">
+                        <h3 class="card-title">Programaci&oacute;n de WOD</h3>
+                </div>
+                <div class="card-alert alert mb-0" id="FORM-STATUS-default" style="display:none"></div>
+                <div class="card-body">
+                        <div class="row">
+                                <div class="col-sm-12">
+                                        <div class="form-group">
+                                                <label class="form-label">
+                                                        Ejercicios registrables
+                                                        [% ttf.tip('Los resultados de estos ejercicios ser&aacute;n capturados por cada usuarios.') %]
+                                                </label>
+                                                <div class="input-group">
+                                                        <select id="OO-EXERCISE" class="form-control custom-select">
+                                                                <option value=""></option>
+                                                                [% FOREACH ee = data.exercises %]
+                                                                        <option value="[% ee.id %]" data-ask_metric="[% ee.ask_metric %]">[% ee.name %]</option>
+                                                                [% END %]
+                                                        </select>
+                                                        <i class="ASK-METRIC fa fa-male text-blue" style="margin:8px;display:none"></i>
+                                                        <input type="number" id="INPUT-METRIC-MALE" class="ASK-METRIC form-control" style="text-align:right;max-width:70px;display:none">
+                                                        <i class="ASK-METRIC fa fa-female text-pink" style="margin:8px;display:none"></i>
+                                                        <input type="number" id="INPUT-METRIC-FEMALE" class="ASK-METRIC form-control" style="text-align:right;max-width:70px;display:none">
+                                                        <button id="BTN-ADD-EXERCISE" class="btn btn-success" style="margin-left:.6rem">
+                                                                <i class="fe fe-plus"></i>
+                                                        </button>
+                                                </div>
+                                        </div>
+                                        <div class="tags" id="DIV-TAG-LIST"></div>
+                                </div>
+                        </div>
+                </div>
+                <form name="default" action="[% ttf.uri( c => 'wods', m => 'upsert-do' ) %]" method="post">
+                        <input type="hidden" id="JSON-EXERCISE-ITEMS" name="JSON_exercise_items" value="">
+                        <div class="card-body">
+                                        <div class="row">
+                                                <div class="col-sm-12">
+                                                        <div class="form-group form-fieldset">
+                                                                <div class="row">
+                                                                        <div class="col-sm-6">
+                                                                                <label class="form-label" style="text-align:right">Fecha&nbsp;</label>
+                                                                                <div class="input-group" style="margin-bottom:1rem">
+                                                                                        <input type="text" name="date" class="form-control date-calendar" style="text-align:right" maxlength="10" placeholder="Fecha">
+                                                                                        <span class="input-group-append">
+                                                                                                <span class="input-group-text"><i class="fe fe-calendar"></i></span>
+                                                                                        </span>
+                                                                                </div>
+                                                                        </div>
+                                                                        <div class="col-sm-6">
+                                                                                <label class="form-label" style="text-align:right">Nombre de WOD&nbsp;</label>
+                                                                                <input type="text" name="name" class="form-control" placeholder="Nombre" value="[% data.default_wod_name %]" autocomplete="off" style="text-align:right">
+                                                                        </div>
+                                                                </div>
+                                                        </div>
+                                                        <div class="form-group">
+                                                                <label class="form-label">
+                                                                        Tipo de WOD
+                                                                </label>
+                                                                <div class="selectgroup selectgroup-pills">
+                                                                        [% FOREACH tt = data.main_types %]
+                                                                                <label class="selectgroup-item"
+                                                                                        data-toggle="tooltip"
+                                                                                        data-placement="top"
+                                                                                        title="[% ttf.escape(tt.description) %]">
+                                                                                        <input type="radio"
+                                                                                                name="main_type_code"
+                                                                                                value="[% tt.id %]"
+                                                                                                [% ttf.checked(loop.first) %]
+                                                                                                class="RADIO-MAIN-TYPES selectgroup-input">
+                                                                                        <span class="selectgroup-button">[% tt.name %]</span>
+                                                                                </label>
+                                                                        [% END %]
+                                                                </div>
+                                                        </div>
+                                                        <div class="form-group">
+                                                                <label class="form-label">Instrucciones</label>
+                                                                <textarea name="instructions" class="inputor form-control" style="width:100%;height:160px"></textarea>
+                                                        </div>
+                                                </div>
+                                        </div>
+                        </div>
+                        <div class="card-footer text-right">
+                                <button type="submit" class="btn btn-primary">Agregar WOD</button>
+                        </div>
+                </form>
+                [% v.pre %]
+        </div>
+</div>
+
+<div class="col-sm-6">
+        <div class="card">
+                <div class="card-status bg-green"></div>
+                <div class="card-header">
+                        <h3 class="card-title">Estadisticas</h3>
+                </div>
+                <div class="card-body">
+                        aqui van los stats de cada ejercicio
+                </div>
+        </div>
+</div>
+
+[% INCLUDE include/footer.tt %]

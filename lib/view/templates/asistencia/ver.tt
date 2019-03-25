@@ -1,0 +1,100 @@
+[% INCLUDE include/header/main.tt %]
+
+<div class="col-sm-12">
+        <div class="page-header">
+                <h1 class="page-title">
+                        [% SET CONTROLLER = data.user.is_staff ? 'usuarios' : 'clientes' %]
+                        <a href="[% ttf.uri( c => CONTROLLER, m => 'perfil', id => p.id) %]" class="text-inherit">
+                                [% data.user.display_name %]
+                        </a>
+                        &raquo; Asistencia del mes</h1>
+        </div>
+</div>
+
+<div class="col-sm-8">[% INCLUDE include/asistencia/history.tt, MONTH_SWITCH => 1, , SHOW_VISIT_PKG_DETAILS => 1 %]</div>
+
+<div class="col-sm-4">
+
+        <div class="card card-collapsed">
+                <div class="card-status bg-purple"></div>
+                <div class="card-header">
+                        <h4 class="card-title">Agregar asistencia</h4>
+                        <div class="card-options">
+                                <a href="#" class="card-options-collapse" data-toggle="card-collapse"><i class="fe fe-chevron-up"></i></a>
+                        </div>
+                </div>
+                <div class="card-alert alert mb-0" id="FORM-STATUS-default" style="display:none"></div>
+                <div class="col-sm-12">
+                        <form name="default" method="post" action="[% ttf.uri( c => 'asistencia', m => 'presente-do') %]">
+                                <input type="hidden" name="id" value="[% p.id %]">
+                                <div class="row" style="margin-top:1rem">
+                                        <div class="col-sm-6">
+                                                <label class="form-label">Fecha</label>
+                                                <div class="input-group">
+                                                        <input type="text" name="date" class="form-control date-calendar" style="text-align:right" maxlength="10" placeholder="Fecha">
+                                                        <span class="input-group-append">
+                                                                <span class="input-group-text"><i class="fe fe-calendar"></i></span>
+                                                        </span>
+                                                </div>
+                                        </div>
+                                        <div class="form-group col-sm-6">
+                                                <label class="form-label">Hora</label>
+                                                <input type="number" name="hour" class="form-control" min="1" max="23" step"1" value="12">
+                                        </div>
+                                </div>
+                                <div class="form-group text-right">
+                                        <button type="submit" style="margin-top:10px;margin-bottom:10px" class="pull-right btn btn-purple ml-auto">Agregar asistencia</button>
+                                </div>
+                        </form>
+                        [% v.pre %]
+                </div>
+        </div>
+
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-green mr-3">
+                                <i class="fe fe-check"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">[% data.totals.days || 0 %]</h4>
+                                <small class="d-block text-muted">
+                                        [% ttf.plural(data.totals.days, 'D&iacute;a', 'D&iacute;as') %] de asistencia
+                                </small>
+                        </div>
+                </div>
+        </div>
+        [% IF data.totals.visits > data.totals.days %]
+                <div class="card p-3">
+                        <div class="d-flex align-items-center">
+                                <span class="stamp stamp-md bg-red mr-3">
+                                        <i class="fe fe-check-square"></i>
+                                </span>
+                                <div>
+                                        <h4 class="m-0">[% data.totals.visits %]</h4>
+                                        <small class="d-block text-muted">
+                                                [% ttf.plural(data.totals.days, 'Visita', 'Visitas') %] totales
+                                        </small>
+                                </div>
+                        </div>
+                </div>
+        [% END %]
+
+        [% IF data.totals.cancelled > 0 %]
+                <div class="card p-3">
+                        <div class="d-flex align-items-center">
+                                <span class="stamp stamp-md bg-orange mr-3">
+                                        <i class="fe fe-x"></i>
+                                </span>
+                                <div>
+                                        <h4 class="m-0">[% data.totals.cancelled %]</h4>
+                                        <small class="d-block text-muted">
+                                                [% ttf.plural(data.totals.cancelled, 'Cancelaci&oacute;n', 'Cancelaciones') %]
+                                        </small>
+                                </div>
+                        </div>
+                </div>
+        [% END %]
+
+</div>
+
+[% INCLUDE include/footer.tt %]

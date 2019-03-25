@@ -1,0 +1,54 @@
+[% IF DETAILS && DETAILS.size %]
+        [% FOREACH dd = DETAILS %]
+                <div class="row">
+                        <div class="col-md-12">
+                                <div class="form-group">
+                                        <label class="form-label">[% dd.name %]</label>
+                                        [% SWITCH dd.type_code %]
+                                        [% CASE 'text' %]
+                                                <input name="DD-[% dd.id %]"
+                                                        [% IF SXSKIP %]disabled="disabled" readonly="readonly"[% END %]
+                                                        type="text"
+                                                        class="[% IF SXSKIP %]SX-SKIP[% END %] INPUT-ADDITIONAL-DETAIL form-control [% IF dd.required %]SX-REQUIRED[% END %]"
+                                                        placeholder="[% dd.name %]"
+                                                        value="[% VALUES.${dd.id} %]">
+                                        [% CASE 'numeric' %]
+                                                <input name="DD-[% dd.id %]"
+                                                        [% IF SXSKIP %]disabled="disabled" readonly="readonly"[% END %]
+                                                        type="text"
+                                                        onkeypress="return __ADMINFIT__.money_only(this, event)"
+                                                        class="[% IF SXSKIP %]SX-SKIP[% END %] INPUT-ADDITIONAL-DETAIL form-control [% IF dd.required %]SX-REQUIRED[% END %]"
+                                                        placeholder="Valor n&uacute;merico"
+                                                        
+                                                        maxlength="16"
+                                                        value="[% VALUES.${dd.id} %]">
+                                        [% CASE 'date' %]
+                                                <input name="DD-[% dd.id %]"
+                                                        [% IF SXSKIP %]disabled="disabled" readonly="readonly"[% END %]
+                                                        type="text"
+                                                        class="[% IF SXSKIP %]SX-SKIP[% END %] INPUT-ADDITIONAL-DETAIL form-control [% IF dd.required %]SX-REQUIRED[% END %]"
+                                                        data-mask="00/00/0000"
+                                                        data-mask-clearifnotmatch="true"
+                                                        placeholder="DD/MM/AAAA"
+                                                        
+
+                                                        maxlength="10"
+                                                        value="[% VALUES.${dd.id} %]">
+                                                        <small class="d-block item-except text-sm text-muted h-1x text-right">
+                                                                DD/MM/AAAA
+                                                        </small>
+                                        [% CASE 'options' %]
+                                                <select name="DD-[% dd.id %]"
+                                                        [% IF SXSKIP %]disabled="disabled" readonly="readonly"[% END %]
+                                                        class="[% IF SXSKIP %]SX-SKIP[% END %] INPUT-ADDITIONAL-DETAIL form-control custom-select [% IF dd.required %]SX-REQUIRED[% END %]">
+                                                        <option value="">
+                                                        [% FOREACH oo = dd.options %]
+                                                                <option value="[% oo %]" [% ttf.selected( oo == VALUES.${dd.id} ) %]>[% oo %]</option>
+                                                        [% END %]
+                                                </select>
+                                        [% END %]
+                                </div>
+                        </div>
+                </div>
+        [% END %]
+[% END %]

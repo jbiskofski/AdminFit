@@ -1,0 +1,3 @@
+[% INCLUDE include/header/main.tt %]
+<div class="col-sm-12">[% INCLUDE 'include/configuracion/details-upsert.tt' %]</div>
+[% INCLUDE include/footer.tt %]

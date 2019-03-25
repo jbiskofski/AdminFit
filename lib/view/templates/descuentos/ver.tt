@@ -1,0 +1,71 @@
+[% INCLUDE include/header/main.tt %]
+
+<div class="col-sm-9">
+        [% INCLUDE include/descuentos/upsert.tt %]
+</div>
+
+<div class="col-sm-3">
+
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-green mr-3">
+                                <i class="fe fe-dollar-sign"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">$[% ttf.commify(data.totals.discount_amount || 0) %]</h4>
+                                <small class="d-block text-muted">Descuentos este mes</small>
+                        </div>
+                </div>
+        </div>
+
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-blue mr-3">
+                                <i class="fe fe-minus"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">[% data.totals.discounts || 0 %]</h4>
+                                <small class="d-block text-muted">
+                                        [% ttf.plural(data.totals.discounts, 'Descuento este mes', 'Descuentos este mes') %]
+                                </small>
+                        </div>
+                </div>
+        </div>
+
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-red mr-3">
+                                <i class="fe fe-x"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">[% data.totals.cancelled || 0 %]</h4>
+                                <small class="d-block text-muted">
+                                        [% ttf.plural(data.totals.cancelled, 'Cancelaci&oacute;n este mes', 'Cancelaciones este mes') %]
+                                </small>
+                        </div>
+                </div>
+        </div>
+
+        [% IF data.discount.is_permanent %]
+                <div class="card p-3">
+                        <div class="alert alert-info" role="alert">
+                                <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                <b>Descuento general.</b>
+                                <br>
+                                El descuento general sirve para disminuir cobros existentes, no puede ser modificado o deshabilitado.
+                        </div>
+                </div>
+        [% END %]
+
+</div>
+
+[% IF data.history.size %]
+        <div class="col-sm-12">
+                <div class="page-header">
+                        <h1 class="page-title">&Uacute;ltimos 10 movimientos</h1>
+                </div>
+        </div>
+        [% INCLUDE 'include/descuentos/history.tt', TRUNCATE => 10 %]
+[% END %]
+
+[% INCLUDE include/footer.tt %]

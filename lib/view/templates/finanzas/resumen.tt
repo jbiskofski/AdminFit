@@ -1,0 +1,826 @@
+[% INCLUDE include/header/main.tt %]
+
+<script>
+require(['jquery'], function($) {
+        $(document).ready( function() {
+
+                $("input[name=RADIO-SHOW-REPORT]").click( function() {
+                        $(".DIV-REPORTS").hide();
+                        $("#DIV-REPORT-" + this.value ).fadeIn("slow");
+                });
+
+                $("input[name=RADIO-CHARGE-FILTERS]").change( function() {
+                        $("table#TABLE-CHARGES tr").show();
+                        $(".TD-CHARGE-LOOP-COUNT").show();
+                        if ( this.value === 'MEMBERSHIPS' ) {
+                                $("table#TABLE-CHARGES tr.TR-CHARGE-ITEM").not(".TR-CHARGE-MEMBERSHIPS").hide();
+                                $(".TD-CHARGE-LOOP-COUNT").hide();
+                        }
+                        else if ( this.value === 'SALES' ) {
+                                $("table#TABLE-CHARGES tr.TR-CHARGE-ITEM").not(".TR-CHARGE-SALES").hide();
+                                $(".TD-CHARGE-LOOP-COUNT").hide();
+                        }
+                        else if ( this.value === 'PREPAYMENTS' ) {
+                                $("table#TABLE-CHARGES tr.TR-CHARGE-ITEM").not(".TR-CHARGE-PREPAYMENTS").hide();
+                                $(".TD-CHARGE-LOOP-COUNT").hide();
+                        }
+                        _update_charge_totals(this.value);
+                });
+
+                $("input[name=RADIO-CANCELLED-FILTERS]").change( function() {
+                        $("table#TABLE-CANCELLED tr").show();
+                        $(".TD-CANCELLED-LOOP-COUNT").show();
+                        if ( this.value === 'CHARGES' ) {
+                                $("table#TABLE-CANCELLED tr.TR-CANCELLED-ITEM").not(".TR-CANCELLED-CHARGE").hide();
+                                $(".TD-CANCELLED-LOOP-COUNT").hide();
+                        }
+                        else if ( this.value === 'PAYMENTS' ) {
+                                $("table#TABLE-CANCELLED tr.TR-CANCELLED-ITEM").not(".TR-CANCELLED-PAYMENT").hide();
+                                $(".TD-CANCELLED-LOOP-COUNT").hide();
+                        }
+                        else if ( this.value === 'DISCOUNTS' ) {
+                                $("table#TABLE-CANCELLED tr.TR-CANCELLED-ITEM").not(".TR-CANCELLED-DISCOUNT").hide();
+                                $(".TD-CANCELLED-LOOP-COUNT").hide();
+                        }
+                });
+
+        });
+
+        function _update_charge_totals(TYPE_CODE) {
+
+                var TOTAL_AMOUNT = 0;
+
+                $("table#TABLE-CHARGES tfoot td.TD-CHARGE-TOTALS").each( function(i, TD) {
+
+                        var AMOUNT = 0;
+
+                        if ( TYPE_CODE === 'MEMBERSHIPS' ) {
+                                AMOUNT = parseFloat( $(TD).data("memberships_total") );
+                        }
+                        else if ( TYPE_CODE === 'SALES' ) {
+                                AMOUNT = parseFloat( $(TD).data("sales_total") );
+                        }
+                        else if ( TYPE_CODE === 'PREPAYMENTS' ) {
+                                AMOUNT = parseFloat( $(TD).data("prepayments_total") );
+                        }
+                        else {
+                                AMOUNT = parseFloat( $(TD).data("memberships_total") ) + parseFloat( $(TD).data("sales_total") );
+                        }
+
+                        $(TD).html( '$' + __ADMINFIT__.commify( AMOUNT.toFixed(2) ) );
+
+                });
+
+        }
+
+
+});
+</script>
+
+<div class="col-sm-3">
+        <div id="DIV-SIDE-FACTS-PINNED">
+                <div class="page-header" style="margin-top:0px !important">
+                        <div class="h1 page-title" style="width:100%;text-align:right">
+                                [% IF data.user.id %]
+                                        [% data.user.display_name %]
+                                [% ELSE %]
+                                        Resumen de movimientos
+                                [% END %]
+                                <br>
+                                [% IF p.start_date && p.end_date %]
+                                        [% p.start_date %] &raquo; [% p.end_date %]
+                                [% ELSIF p.fecha %]
+                                        [% p.fecha %]
+                                [% END %]
+                        </div>
+                </div>
+
+                <div class="p-0" style="margin-bottom:34px">
+                        <div class="form-label text-right">B&uacute;squeda entre fechas&nbsp;&nbsp;</div>
+                        <form action="[% ttf.uri( c => 'finanzas', m => 'resumen' ) %]" method="get">
+                                [% IF p.client_id %]
+                                        <input type="hidden" name="client_id" value="[% p.client_id %]">
+                                [% END %]
+                                <input type="hidden" name="start_date" value="">
+                                <input type="hidden" name="end_date" value="">
+                                <div class="input-group">
+                                        <input id="daterange" class="form-control text-right">
+                                        <span class="input-group-append">
+                                                <span class="input-group-text"><i class="fe fe-calendar"></i></span>
+                                        </span>
+                                </div>
+                        </form>
+                </div>
+
+                <div class="card p-3">
+                        <div class="d-flex align-items-center">
+                                <span class="stamp stamp-md bg-blue mr-3">
+                                        <i class="fe fe-dollar-sign"></i>
+                                </span>
+                                <div>
+                                        <h4 class="m-0">$[% ttf.commify(data.totals.transactions.paid || 0) %]</h4>
+                                        <small class="text-muted">Ingresos</small>
+                                </div>
+                        </div>
+                </div>
+                <div class="card p-3">
+                        <div class="d-flex align-items-center">
+                                <span class="stamp stamp-md bg-orange mr-3">
+                                        <i class="fe fe-shopping-cart"></i>
+                                </span>
+                                <div>
+                                        <h4 class="m-0">$[% ttf.commify(data.totals.charges.charged || 0) %]</h4>
+                                        <small class="text-muted">Cobros</small>
+                                </div>
+                        </div>
+                </div>
+                <div class="card p-3">
+                        <div class="d-flex align-items-center">
+                                <span class="stamp stamp-md bg-green mr-3">
+                                        <i class="fe fe-arrow-down"></i>
+                                </span>
+                                <div>
+                                        <h4 class="m-0">$[% ttf.commify(data.totals.discounts.discounted || 0) %]</h4>
+                                        <small class="text-muted">Descuentos</small>
+                                </div>
+                        </div>
+                </div>
+                <div class="card p-3">
+                        <div class="d-flex align-items-center">
+                                <span class="stamp stamp-md bg-red mr-3">
+                                        <i class="fe fe-x"></i>
+                                </span>
+                                <div>
+                                        <h4 class="m-0">[% data.cancelled.size || 0 %]</h4>
+                                        <small class="text-muted">Cancelaciones</small>
+                                </div>
+                        </div>
+                </div>
+                <div style="padding-top:3px">
+                        <div class="form-label text-right">Cambiar reporte</div>
+                        <div class="card text-right">
+                                <div class="form-group" style="padding:0px;margin:0px;padding-top:7px">
+                                        <div class="selectgroup selectgroup-pills pull-right" style="margin-bottom:0px !important">
+                                                <label class="selectgroup-item" style="margin-bottom:0px !important">
+                                                        <input type="radio" class="selectgroup-input" name="RADIO-SHOW-REPORT" value="PAYMENTS" [% ttf.checked(p.ver == 'pagos' || !p.ver ) %]>
+                                                        <span class="selectgroup-button selectgroup-button-icon">
+                                                                [% ttf.tip('Ingresos', icon => 'dollar-sign') %]
+                                                        </span>
+                                                </label>
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" class="selectgroup-input" name="RADIO-SHOW-REPORT" value="CHARGES" [% ttf.checked(p.ver == 'cobros' || p.ver == 'renovaciones-de-hoy') %]>
+                                                        <span class="selectgroup-button selectgroup-button-icon">
+                                                                [% ttf.tip('Cobros', icon => 'shopping-cart') %]
+                                                        </span>
+                                                </label>
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" class="selectgroup-input" name="RADIO-SHOW-REPORT" value="DISCOUNTS" [% ttf.checked(p.ver == 'descuentos') %]>
+                                                        <span class="selectgroup-button selectgroup-button-icon">
+                                                                [% ttf.tip('Descuentos', icon => 'arrow-down') %]
+                                                        </span>
+                                                </label>
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" class="selectgroup-input" name="RADIO-SHOW-REPORT" value="PRODUCTS" [% ttf.checked(p.ver == 'productos') %]>
+                                                        <span class="selectgroup-button selectgroup-button-icon">
+                                                                [% ttf.tip('Venta de productos', icon => 'package') %]
+                                                        </span>
+                                                </label>
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" class="selectgroup-input" name="RADIO-SHOW-REPORT" value="CANCELLED" [% ttf.checked(p.ver == 'cancelados') %]>
+                                                        <span class="selectgroup-button selectgroup-button-icon">
+                                                                [% ttf.tip('Cancelados', icon => 'x') %]
+                                                        </span>
+                                                </label>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+        </div>
+</div>
+
+<div class="col-sm-9">
+
+        <div class="row">
+
+                <div class="col-sm-6">
+                        <div class="card">
+                                <div class="card-header">
+                                        <h3 class="card-title">Conceptos</h3>
+                                </div>
+                                <div class="card-body">
+                                        [% IF data.charts.concepts %]
+                                                <div id="DIV-CONCEPT-DISTRIBUTION-CHART" style="height:13rem;max-height:13rem;position:relative;" class="c3">
+                                                        <div class="c3-tooltip-container" style="position:absolute;pointer-events:none;display:none"></div>
+                                                </div>
+                                                [% data.charts.concepts %]
+                                        [% ELSE %]
+                                                <div class="alert alert-info" role="alert" style="min-height:13rem">
+                                                        <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                                        <b>No se han encontrado ventas utilizando la b&uacute;squeda especificada.</b>
+                                                </div>
+                                        [% END %]
+                                </div>
+                        </div>
+                </div>
+
+                <div class="col-sm-6">
+                        <div class="card">
+                                <div class="card-header">
+                                        <h3 class="card-title">Metodos de pago</h3>
+                                </div>
+                                <div class="card-body">
+                                        [% IF data.charts.methods %]
+                                                <div id="DIV-METHOD-DISTRIBUTION-CHART" style="height:13rem;max-height:13rem;position:relative;" class="c3">
+                                                        <div class="c3-tooltip-container" style="position:absolute;pointer-events:none;display:none"></div>
+                                                </div>
+                                                [% data.charts.methods %]
+                                        [% ELSE %]
+                                                <div class="alert alert-info" role="alert" style="min-height:13rem">
+                                                        <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                                        <b>No se han encontrado ventas utilizando la b&uacute;squeda especificada.</b>
+                                                </div>
+                                        [% END %]
+                                </div>
+                        </div>
+                </div>
+
+                <div class="col-sm-12">
+                        <div class="card">
+                                <div class="card-header">
+                                        <h3 class="card-title">
+                                                [% IF data.multi_day_search %]
+                                                        Ingresos por d&iacute;a
+                                                [% ELSE %]
+                                                        Ingresos por hora
+                                                [% END %]
+                                        </h3>
+                                </div>
+                                <div class="card-body">
+                                        [% IF data.charts.dts %]
+                                                <div id="DIV-DT-DISTRIBUTION-CHART" style="height:13rem;max-height:13rem;position:relative;" class="c3">
+                                                        <div class="c3-tooltip-container" style="position:absolute;pointer-events:none;display:none;top:27.5px;left:455.5px;"></div>
+                                                </div>
+                                                [% data.charts.dts %]
+                                        [% ELSE %]
+                                                <div class="alert alert-info" role="alert" style="min-height:13rem">
+                                                        <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                                        <b>No se han encontrado ventas utilizando la b&uacute;squeda especificada.</b>
+                                                </div>
+                                        [% END %]
+                                </div>
+                        </div>
+                </div>
+
+        </div>
+
+</div>
+
+<div class="col-sm-12">
+
+        [% IF data.user.id %]
+                <div class="page-header" style="position:relative">
+                        <h1 class="page-title">[% data.user.display_name %]</h1>
+                        <div style="position:absolute;right:5px;">
+                                <a href="[% ttf.uri( c => 'finanzas', m => 'resumen', fecha => p.fecha, start_date => p.start_date, end_date => p.end_date) %]" class="btn btn-secondary btn-sm">
+                                        <i class="fe fe-users mr-1"></i>
+                                        Ver todos los clientes
+                                </a>
+                        </div>
+                </div>
+        [% END %]
+
+        <div class="card DIV-REPORTS" id="DIV-REPORT-PAYMENTS" [% UNLESS p.ver == 'pagos' || !p.ver %]style="display:none"[% END %]>
+                <div class="card-status bg-blue"></div>
+                <div class="card-header">
+                        <h3 class="card-title">Ingresos</h3>
+                        <div class="card-options" style="padding-top:15px">
+                                <div class="form-group">
+                                        <div class="input-group" style="margin-left:10px;height:28px">
+                                                <span class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                                <i class="fe fe-search mr-1"></i>
+                                                        </span>
+                                                </span>
+                                                <input type="text" id="INPUT-PAYMENTS-SEARCH" data-search_table="table-payments" class="table-search-input form-control" placeholder="Buscar" autocomplete="off">
+                                                &nbsp;&nbsp;
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+                [% IF data.transactions.size %]
+                        <div class="table-responsive">
+                                <table id="table-payments" class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                        <thead>
+                                                <tr>
+                                                        <th class="w-1"></th>
+                                                        <th class="w-1"></th>
+                                                        <th>Fecha y hora</th>
+                                                        <th>Cliente</th>
+                                                        <th>Conceptos</th>
+                                                        <th class="text-right">Ingresos</th>
+                                                </tr>
+                                        </thead>
+                                        <tbody>
+                                                [% FOREACH tt = data.transactions %]
+                                                        <tr>
+                                                                <td>[% loop.count %].</td>
+                                                                <td><i class="text-blue fe fe-dollar-sign"></i></td>
+                                                                <td>
+                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'folio', id => tt.transaction_id ) %]" class="text-inherit">
+                                                                                [% tt.date_time %]
+                                                                        </a>
+                                                                        <small class="d-block text-muted">
+                                                                                [% tt.admin_display_name %]
+                                                                        </small>
+                                                                </td>
+                                                                <td class="table-search-col">
+                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => tt.client_id ) %]" class="text-inherit">
+                                                                                [% tt.client_display_name %]
+                                                                        </a>
+                                                                        <small class="d-block text-muted">
+                                                                                [% tt.display_method %]
+                                                                                [% IF tt.notes %][% ttf.tip(tt.notes) %][% END %]
+                                                                        </small>
+                                                                </td>
+                                                                <td>
+                                                                        [% FOREACH ch = tt.charges %]
+                                                                                <small class="text-muted">
+                                                                                        [% IF tt.charges.size > 1 %]
+                                                                                                [% ttf.gr(ch.remaining_amount <= 0) %]
+                                                                                                $[% ttf.commify(ch.transaction_paid_amount || 0) %]
+                                                                                                &nbsp;-&nbsp;
+                                                                                        [% END %]
+                                                                                        [% ch.concept.concept %]
+                                                                                        [% IF ch.type_code == 'I' && ch.concept.details %]
+                                                                                                [% ttf.tip(ch.concept.details) %]
+                                                                                        [% END %]
+                                                                                </small>
+                                                                                <br>
+                                                                        [% END %]
+                                                                </td>
+                                                                <td class="text-right">
+                                                                        $[% ttf.commify(tt.payment_amount || 0) %]
+                                                                        [% IF tt.debit_amount > 0 %]
+                                                                                <br>
+                                                                                <small class="text-muted">
+                                                                                        [% ttf.tip('Pago con saldo a favor', icon => 'arrow-up-circle', color => 'green' ) %]
+                                                                                        $[% ttf.commify(tt.debit_amount) %]
+                                                                                </small>
+                                                                        [% END %]
+                                                                </td>
+                                                        </tr>
+                                                [% END %]
+                                        </tbody>
+                                        <tfoot class="table-info h5">
+                                                <td colspan="4">&nbsp;</td>
+                                                <td>
+                                                        [% data.totals.transactions.concepts || 0 %]
+                                                        [% ttf.plural(data.totals.transactions.concepts, 'Concepto', 'Conceptos') %]
+                                                </td>
+                                                <td class="text-right">$[% ttf.commify(data.totals.transactions.paid || 0) %]</td>
+                                        </tfoot>
+                                </table>
+                        </div>
+                [% ELSE %]
+                        <div class="card-body">
+                                <div class="alert alert-info" role="alert">
+                                        <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                        <b>No se han encontrado ingresos utilizando la b&uacute;squeda especificada.</b>
+                                </div>
+                        </div>
+                [% END %]
+        </div>
+
+        <div class="card DIV-REPORTS" id="DIV-REPORT-CHARGES" [% UNLESS p.ver == 'cobros' || p.ver == 'renovaciones-de-hoy' %]style="display:none"[% END %]>
+                <div class="card-status bg-orange"></div>
+                <div class="card-header">
+                        <h3 class="card-title">Cobros</h3>
+                        <div class="card-options">
+                                <div class="form-group" style="margin-bottom:0px !important">
+                                        <div class="selectgroup selectgroup-pills">
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" class="selectgroup-input" name="RADIO-CHARGE-FILTERS" value="ALL" [% UNLESS p.ver == 'renovaciones-de-hoy' %]checked="checked"[% END %]>
+                                                        <span class="selectgroup-button selectgroup-button-icon">
+                                                                [% ttf.tip('Todos', icon => 'check-square') %]
+                                                        </span>
+                                                </label>
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" class="selectgroup-input" name="RADIO-CHARGE-FILTERS" value="MEMBERSHIPS" [% ttf.checked(p.ver == 'renovaciones-de-hoy') %]>
+                                                        <span class="selectgroup-button selectgroup-button-icon">
+                                                                [% ttf.tip('Membres&iacute;as', icon => 'repeat') %]
+                                                        </span>
+                                                </label>
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" class="selectgroup-input" name="RADIO-CHARGE-FILTERS" value="SALES">
+                                                        <span class="selectgroup-button selectgroup-button-icon">
+                                                                [% ttf.tip('Ventas', icon => 'package') %]
+                                                        </span>
+                                                </label>
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" class="selectgroup-input" name="RADIO-CHARGE-FILTERS" value="PREPAYMENTS">
+                                                        <span class="selectgroup-button selectgroup-button-icon">
+                                                                [% ttf.tip('Prepagos', icon => 'arrow-up-circle') %]
+                                                        </span>
+                                                </label>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+                [% IF data.charges.size %]
+                        <div class="table-responsive">
+                                <table id="TABLE-CHARGES" class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                        <thead>
+                                                <tr>
+                                                        <th class="w-1"></th>
+                                                        <th class="w-1"></th>
+                                                        <th>Fecha y hora</th>
+                                                        <th>Cliente</th>
+                                                        <th>Venta</th>
+                                                        <th>Descuentos</th>
+                                                        <th>Debito</th>
+                                                        <th>Ingresos</th>
+                                                        <th class="text-right">Restante</th>
+                                                </tr>
+                                        </thead>
+                                        <tbody>
+
+                                                [% SET CHARGE_MEMBERSHIP_TOTALS = { CHARGED => 0, DISCOUNTED => 0, DEBIT => 0, PAID => 0 } %]
+                                                [% SET CHARGE_PREPAYMENT_TOTALS = { CHARGED => 0, DISCOUNTED => 0, DEBIT => 0, PAID => 0 } %]
+                                                [% SET CHARGE_SALES_TOTALS = { CHARGED => 0, DISCOUNTED => 0, DEBIT => 0, PAID => 0 } %]
+
+                                                [% FOREACH ch = data.charges %]
+
+                                                        [% SET CHARGE_CLASS = '' %]
+                                                        [% SET CHARGE_TIP = '' %]
+                                                        [% IF ch.type_code == 'M' %]
+                                                                [% CHARGE_CLASS = 'TR-CHARGE-MEMBERSHIPS' %]
+                                                                [% CHARGE_TIP = ttf.tip('Membres&iacute;a', color => 'orange', icon => 'repeat') %]
+                                                                [% CHARGE_MEMBERSHIP_TOTALS.CHARGED = CHARGE_MEMBERSHIP_TOTALS.CHARGED + ch.amount %]
+                                                                [% CHARGE_MEMBERSHIP_TOTALS.DISCOUNTED = CHARGE_MEMBERSHIP_TOTALS.DISCOUNTED + ch.discount_amount %]
+                                                                [% CHARGE_MEMBERSHIP_TOTALS.DEBIT = CHARGE_MEMBERSHIP_TOTALS.DEBIT + ch.debit_amount %]
+                                                                [% CHARGE_MEMBERSHIP_TOTALS.PAID = CHARGE_MEMBERSHIP_TOTALS.PAID + ch.paid_amount %]
+                                                                [% CHARGE_MEMBERSHIP_TOTALS.REMAINING = CHARGE_MEMBERSHIP_TOTALS.REMAINING + ch.remaining_amount %]
+                                                        [% ELSIF ch.type_code == 'P' %]
+                                                                [% CHARGE_CLASS = 'TR-CHARGE-PREPAYMENTS' %]
+                                                                [% CHARGE_TIP = ttf.tip('Prepago', color => 'green', icon => 'arrow-up-circle') %]
+                                                                [% CHARGE_PREPAYMENT_TOTALS.CHARGED = CHARGE_PREPAYMENT_TOTALS.CHARGED + ch.amount %]
+                                                                [% CHARGE_PREPAYMENT_TOTALS.DISCOUNTED = CHARGE_PREPAYMENT_TOTALS.DISCOUNTED + ch.discount_amount %]
+                                                                [% CHARGE_PREPAYMENT_TOTALS.DEBIT = CHARGE_PREPAYMENT_TOTALS.DEBIT + ch.debit_amount %]
+                                                                [% CHARGE_PREPAYMENT_TOTALS.PAID = CHARGE_PREPAYMENT_TOTALS.PAID + ch.paid_amount %]
+                                                                [% CHARGE_PREPAYMENT_TOTALS.REMAINING = CHARGE_PREPAYMENT_TOTALS.REMAINING + ch.remaining_amount %]
+                                                        [% ELSIF ch.type_code == 'I' %]
+                                                                [% CHARGE_CLASS = 'TR-CHARGE-SALES' %]
+                                                                [% CHARGE_TIP = ttf.tip('Venta', color => 'orange', icon => 'shopping-cart') %]
+                                                                [% CHARGE_SALES_TOTALS.CHARGED = CHARGE_SALES_TOTALS.CHARGED + ch.amount %]
+                                                                [% CHARGE_SALES_TOTALS.DISCOUNTED = CHARGE_SALES_TOTALS.DISCOUNTED + ch.discount_amount %]
+                                                                [% CHARGE_SALES_TOTALS.DEBIT = CHARGE_SALES_TOTALS.DEBIT + ch.debit_amount %]
+                                                                [% CHARGE_SALES_TOTALS.PAID = CHARGE_SALES_TOTALS.PAID + ch.paid_amount %]
+                                                                [% CHARGE_SALES_TOTALS.REMAINING = CHARGE_SALES_TOTALS.REMAINING + ch.remaining_amount %]
+                                                        [% END %]
+
+                                                        <tr class="TR-CHARGE-ITEM [% CHARGE_CLASS %]" [% IF p.ver == 'renovaciones-de-hoy' && ch.type_code != 'M' %]style="display:none"[% END %]>
+                                                                <td class="w-1">
+                                                                        <span class="TD-CHARGE-LOOP-COUNT" [% IF p.ver == 'renovaciones-de-hoy' %]style="display:none"[% END %]>
+                                                                                [% loop.count %].
+                                                                        </span>
+                                                                </td>
+                                                                <td>[% CHARGE_TIP %]</td>
+                                                                <td>
+                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'cobro', id => ch.id ) %]" class="text-inherit">
+                                                                                [% ch.creation_date_time %]
+                                                                        </a>
+                                                                        <small class="d-block text-muted">
+                                                                                [% IF ch.admin_id %][% ch.admin_display_name %][% ELSE %]-[% END %]
+                                                                        </small>
+                                                                </td>
+                                                                <td>
+                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => ch.client_id ) %]" class="text-inherit">
+                                                                                [% ch.client_display_name %]
+                                                                        </a>
+                                                                        <small class="d-block text-muted">
+                                                                                [% ch.concept.concept %]
+                                                                                [% IF ch.concept.details %]<br>[% ch.concept.details %][% END %]
+                                                                        </small>
+                                                                </td>
+                                                                <td>$[% ttf.commify(ch.amount || 0) %]</td>
+                                                                <td>$[% ttf.commify(ch.discount_amount || 0) %]</td>
+                                                                <td>$[% ttf.commify(ch.debit_amount || 0) %]</td>
+                                                                <td>$[% ttf.commify(ch.paid_amount || 0) %]</td>
+                                                                <td class="text-right [% IF ch.remaining_amount <= 0 %]amount-paid[% END %]">$[% ttf.commify(ch.remaining_amount) || 0 %]</td>
+                                                        </tr>
+                                                [% END %]
+                                        </tbody>
+                                        <tfoot class="table-warning h5">
+                                                <tr>
+                                                        <td colspan="4">&nbsp;</td>
+                                                        <td class="TD-CHARGE-TOTALS"
+                                                                data-memberships_total="[% CHARGE_MEMBERSHIP_TOTALS.CHARGED || 0 %]"
+                                                                data-prepayments_total="[% CHARGE_PREPAYMENT_TOTALS.CHARGED || 0 %]"
+                                                                data-sales_total="[% CHARGE_SALES_TOTALS.CHARGED || 0 %]">
+                                                                        $[% ttf.commify(data.totals.charges.charged || 0) %]
+                                                        </td>
+                                                        <td class="TD-CHARGE-TOTALS"
+                                                                data-memberships_total="[% CHARGE_MEMBERSHIP_TOTALS.DISCOUNTED || 0 %]"
+                                                                data-prepayments_total="[% CHARGE_PREPAYMENT_TOTALS.DISCOUNTED || 0 %]"
+                                                                data-sales_total="[% CHARGE_SALES_TOTALS.DISCOUNTED || 0 %]">
+                                                                        $[% ttf.commify(data.totals.charges.discounted || 0) %]
+                                                        </td>
+                                                        <td class="TD-CHARGE-TOTALS"
+                                                                data-memberships_total="[% CHARGE_MEMBERSHIP_TOTALS.DEBIT || 0 %]"
+                                                                data-prepayments_total="[% CHARGE_PREPAYMENT_TOTALS.DEBIT || 0 %]"
+                                                                data-sales_total="[% CHARGE_SALES_TOTALS.DEBIT || 0 %]">
+                                                                        $[% ttf.commify(data.totals.charges.debit || 0) %]
+                                                        </td>
+                                                        <td class="TD-CHARGE-TOTALS"
+                                                                data-memberships_total="[% CHARGE_MEMBERSHIP_TOTALS.PAID || 0 %]"
+                                                                data-prepayments_total="[% CHARGE_PREPAYMENT_TOTALS.PAID || 0 %]"
+                                                                data-sales_total="[% CHARGE_SALES_TOTALS.PAID || 0 %]">
+                                                                        $[% ttf.commify(data.totals.charges.paid || 0) %]
+                                                        </td>
+                                                        <td class="TD-CHARGE-TOTALS text-right"
+                                                                data-memberships_total="[% CHARGE_MEMBERSHIP_TOTALS.REMAINING || 0 %]"
+                                                                data-prepayments_total="[% CHARGE_PREPAYMENT_TOTALS.REMAINING || 0 %]"
+                                                                data-sales_total="[% CHARGE_SALES_TOTALS.REMAINING || 0 %]">
+                                                                        $[% ttf.commify(data.totals.charges.remaining_amount) || 0 %]
+                                                        </td>
+                                                </tr>
+                                        </tfoot>
+                                </table>
+                        </div>
+                [% ELSE %]
+                        <div class="card-body">
+                                <div class="alert alert-info" role="alert">
+                                        <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                        <b>No se han encontrado cobros utilizando la b&uacute;squeda especificada.</b>
+                                </div>
+                        </div>
+                [% END %]
+        </div>
+
+        <div class="card DIV-REPORTS" id="DIV-REPORT-DISCOUNTS" [% UNLESS p.ver == 'descuentos' %]style="display:none"[% END %]>
+                <div class="card-status bg-green"></div>
+                <div class="card-header">
+                        <h3 class="card-title">Descuentos</h3>
+                </div>
+                [% IF data.discounts.size %]
+                        <div class="table-responsive">
+                                <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                        <thead>
+                                                <tr>
+                                                        <th class="w-1"></th>
+                                                        <th class="w-1"></th>
+                                                        <th>Fecha y hora</th>
+                                                        <th>Cliente</th>
+                                                        <th>Adeudo</th>
+                                                        <th class="text-right">Descuento</th>
+                                                </tr>
+                                        </thead>
+                                        <tbody>
+                                                [% FOREACH dd = data.discounts %]
+                                                        <tr>
+                                                                <td>[% loop.count %].</td>
+                                                                <td><i class="text-green fe fe-arrow-down"></i></td>
+                                                                <td>
+                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'cobro', id => dd.charge_id ) %]" class="text-inherit">
+                                                                                [% dd.date_time %]
+                                                                        </a>
+                                                                        <small class="d-block text-muted">
+                                                                                [% dd.admin_display_name %]
+                                                                        </small>
+                                                                </td>
+                                                                <td>
+                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => dd.client_id ) %]" class="text-inherit">
+                                                                                [% dd.client_display_name %]
+                                                                        </a>
+                                                                        <small class="d-block text-muted">
+                                                                                [% dd.discount_name %]
+                                                                                [% IF dd.discount_notes %]
+                                                                                        [% ttf.tip('<i class="fe fe-user"></i> ' _ dd.admin_display_name _ '<br>' _ dd.discount_notes) %]
+                                                                                [% END %]
+                                                                        </small>
+                                                                </td>
+                                                                <td>$[% ttf.commify(dd.original_amount || 0) %]</td>
+                                                                <td class="text-right">$[% ttf.commify(dd.discount_amount || 0) %]</td>
+                                                        </tr>
+                                                [% END %]
+                                        </tbody>
+                                        <tfoot class="table-success h5">
+                                                <tr>
+                                                        <td colspan="5">&nbsp;</td>
+                                                        <td class="text-right">$[% ttf.commify(data.totals.discounts.discounted || 0) %]</td>
+                                                </tr>
+                                        </tfoot>
+                                </table>
+                        </div>
+                [% ELSE %]
+                        <div class="card-body">
+                                <div class="alert alert-info" role="alert">
+                                        <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                        <b>No se han encontrado descuentos utilizando la b&uacute;squeda especificada.</b>
+                                </div>
+                        </div>
+                [% END %]
+        </div>
+
+                <div class="DIV-REPORTS" id="DIV-REPORT-PRODUCTS" [% UNLESS p.ver == 'productos' %]style="display:none"[% END %]>
+                [% IF data.inventory_items.size %]
+                        <div class="card">
+                                <div class="card-status bg-purple"></div>
+                                <div class="card-header">
+                                        <h3 class="card-title">Categorias de productos</h3>
+                                </div>
+                                <div class="table-responsive">
+                                        <table id="TABLE-ITEM-CATEGORIES" class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                                <thead>
+                                                        <tr>
+                                                                <th class="w-1"></th>
+                                                                <th class="w-1"></th>
+                                                                <th>Categor&iacute;a</th>
+                                                                <th>Ventas</th>
+                                                                <th class="text-right">Cantidad</th>
+                                                        </tr>
+                                                </thead>
+                                                <tbody>
+                                                        [% FOREACH cat = data.item_categories %]
+                                                                <tr>
+                                                                        <td class="w-1">[% loop.count %].</td>
+                                                                        <td>[% ttf.tip('Categoria', color => 'purple', icon => 'codepen') %]</td>
+                                                                        <td>[% cat.name %]</td>
+                                                                        <td>[% cat.sales || 0 %]</td>
+                                                                        <td class="text-right">$[% ttf.commify(cat.amount) %]</td>
+                                                                </tr>
+                                                        [% END %]
+                                                </tbody>
+                                        </table>
+                                </div>
+                        </div>
+                        <div class="card">
+                                <div class="card-status bg-purple"></div>
+                                <div class="card-header">
+                                        <h3 class="card-title">Venta de productos</h3>
+                                </div>
+                                <div class="table-responsive">
+                                        <table id="TABLE-INVENTORY-ITEMS" class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                                <thead>
+                                                        <tr>
+                                                                <th class="w-1"></th>
+                                                                <th class="w-1"></th>
+                                                                <th>Producto</th>
+                                                                <th>Categor&iacute;a</th>
+                                                                <th>Ventas</th>
+                                                                <th class="text-right">Cantidad</th>
+                                                        </tr>
+                                                </thead>
+                                                <tbody>
+                                                        [% FOREACH ii = data.inventory_items %]
+                                                                <tr>
+                                                                        <td class="w-1">[% loop.count %].</td>
+                                                                        <td>[% ttf.tip('Venta de producto', color => 'purple', icon => 'package') %]</td>
+                                                                        <td><a href="[% ttf.uri( c => 'ventas', m => 'ver', id => ii.id ) %]" class="text-inherit">[% ii.name %]</a></td>
+                                                                        <td>[% ii.category %]</td>
+                                                                        <td>[% ii.sales || 0 %]</td>
+                                                                        <td class="text-right">$[% ttf.commify(ii.amount) %]</td>
+                                                                </tr>
+                                                        [% END %]
+                                                </tbody>
+                                        </table>
+                                </div>
+                        </div>
+                [% ELSE %]
+                        <div class="card-body">
+                                <div class="alert alert-info" role="alert">
+                                        <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                        <b>No se han encontrado ventas de producto utilizando la b&uacute;squeda especificada.</b>
+                                </div>
+                        </div>
+                [% END %]
+        </div>
+
+        <div class="card DIV-REPORTS" id="DIV-REPORT-CANCELLED" [% UNLESS p.ver == 'cancelados' %]style="display:none"[% END %]>
+                <div class="card-status bg-red"></div>
+                <div class="card-header">
+                        <h3 class="card-title">Cancelaciones</h3>
+                        <div class="card-options">
+                                <div class="form-group" style="margin-bottom:0px !important">
+                                        <div class="selectgroup selectgroup-pills">
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" class="selectgroup-input" name="RADIO-CANCELLED-FILTERS" value="ALL" checked="checked">
+                                                        <span class="selectgroup-button selectgroup-button-icon">
+                                                                [% ttf.tip('Todos', icon => 'check-square') %]
+                                                        </span>
+                                                </label>
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" class="selectgroup-input" name="RADIO-CANCELLED-FILTERS" value="CHARGES">
+                                                        <span class="selectgroup-button selectgroup-button-icon">
+                                                                [% ttf.tip('Cobros', icon => 'shopping-cart') %]
+                                                        </span>
+                                                </label>
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" class="selectgroup-input" name="RADIO-CANCELLED-FILTERS" value="PAYMENTS">
+                                                        <span class="selectgroup-button selectgroup-button-icon">
+                                                                [% ttf.tip('Pagos', icon => 'dollar-sign') %]
+                                                        </span>
+                                                </label>
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" class="selectgroup-input" name="RADIO-CANCELLED-FILTERS" value="DISCOUNTS">
+                                                        <span class="selectgroup-button selectgroup-button-icon">
+                                                                [% ttf.tip('Descuentos', icon => 'arrow-down') %]
+                                                        </span>
+                                                </label>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+                [% IF data.cancelled.size %]
+                        <div class="table-responsive">
+                                <table id="TABLE-CANCELLED" class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                        <thead>
+                                                <tr>
+                                                        <th class="w-1"></th>
+                                                        <th class="w-1"></th>
+                                                        <th>Fecha y hora</th>
+                                                        <th>Cliente</th>
+                                                        <th class="text-right">Cantidad</th>
+                                                </tr>
+                                        </thead>
+                                        <tbody>
+                                                [% FOREACH can = data.cancelled %]
+                                                        [% SET CANCELLED_CLASS = '' %]
+
+                                                        [% IF can.cancelled_charge_amount %]
+                                                                [% CANCELLED_CLASS = 'TR-CANCELLED-CHARGE' %]
+                                                        [% ELSIF can.cancelled_payment_amount %]
+                                                                [% CANCELLED_CLASS = 'TR-CANCELLED-PAYMENT' %]
+                                                        [% ELSE %]
+                                                                [% CANCELLED_CLASS = 'TR-CANCELLED-DISCOUNT' %]
+                                                        [% END %]
+
+                                                        <tr class="TR-CANCELLED-ITEM [% CANCELLED_CLASS %]">
+                                                                <td class="w-1"><span class="TD-CANCELLED-LOOP-COUNT">[% loop.count %].</span></td>
+                                                                <td>
+                                                                        [% IF can.cancelled_charge_amount %]
+                                                                                [% ttf.tip('Cobro', color => 'red', icon => 'shopping-cart') %]
+                                                                        [% ELSIF can.cancelled_payment_amount %]
+                                                                                [% ttf.tip('Pago', color => 'red', icon => 'dollar-sign') %]
+                                                                        [% ELSE %]
+                                                                                [% ttf.tip('Descuento', color => 'red', icon => 'arrow-down') %]
+                                                                        [% END %]
+                                                                </td>
+                                                                <td>
+                                                                        [% IF can.cancelled_charge_amount %]
+                                                                                <a href="[% ttf.uri( c => 'finanzas', m => 'cobro', id => can.id ) %]" class="text-inherit">
+                                                                                        [% can.cancelled_date_time %]
+                                                                                </a>
+                                                                        [% ELSE %]
+                                                                                <a href="[% ttf.uri( c => 'finanzas', m => 'cobro', id => can.charge_id ) %]" class="text-inherit">
+                                                                                        [% can.date_time || can.cancelled_date_time %]
+                                                                                </a>
+                                                                        [% END %]
+                                                                        <small class="d-block text-muted">
+                                                                                [% can.cancelled_display_name %]
+                                                                        </small>
+                                                                </td>
+                                                                <td>
+                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => can.client_id ) %]" class="text-inherit">
+                                                                                [% can.client_display_name %]
+                                                                        </a>
+                                                                        <small class="d-block text-muted">
+                                                                                [% IF can.cancelled_charge_amount %]
+                                                                                        [% can.concept.concept %]
+                                                                                [% ELSIF can.cancelled_payment_amount %]
+                                                                                        [% can.display_method %]
+                                                                                [% ELSE %]
+                                                                                        [% can.discount_name %]
+                                                                                [% END %]
+                                                                                [% IF can.cancelled_notes %]
+                                                                                        [% ttf.tip(can.display_cancelled_details) %]
+                                                                                [% END %]
+                                                                        </small>
+                                                                </td>
+                                                                <td class="text-right amount-paid text-red">
+                                                                        [% IF can.cancelled_charge_amount %]
+                                                                                $[% ttf.commify(can.cancelled_charge_amount) %]
+                                                                        [% ELSIF can.cancelled_payment_amount %]
+                                                                                $[% ttf.commify(can.cancelled_payment_amount) %]
+                                                                        [% ELSE %]
+                                                                                $[% ttf.commify(can.cancelled_discount_amount) %]
+                                                                        [% END %]
+                                                                </td>
+                                                        </tr>
+                                                [% END %]
+                                        </tbody>
+                                </table>
+                        </div>
+                [% ELSE %]
+                        <div class="card-body">
+                                <div class="alert alert-info" role="alert">
+                                        <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                        <b>No se han encontrado cancelaciones utilizando la b&uacute;squeda especificada.</b>
+                                </div>
+                        </div>
+                [% END %]
+        </div>
+
+</div>
+
+[% INCLUDE include/footer.tt %]

@@ -1,0 +1,111 @@
+[% INCLUDE include/header/main.tt %]
+
+<script>
+require(['jquery'], function($) {
+        $(document).ready( function() {
+                $(".custom-switch-input").change( function() {
+                        var CHECKED = this.checked ? 1 : 0;
+                        var URI = "[% ttf.uri( c => 'membresias', m => 'switch-group-owner-do' ) %]";
+                        URI += '?id=[% p.id %]&client_id=' + $(this).val();
+                        window.location.href = URI;
+                });
+        });
+});
+</script>
+
+<div class="col-sm-9">
+        <div class="card">
+                <div class="card-status bg-blue"></div>
+                <div class="card-header">
+                        <h3 class="card-title">Responsable de pago de membres&iacute;a</h3>
+                </div>
+                <div class="table-responsive">
+                        <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                <thead>
+                                        <tr>
+                                                <th>Responsable</th>
+                                                <th colspan="2">Nombre</th>
+                                        </tr>
+                                </thead>
+                                <tbody>
+                                        <tr class="table-info">
+                                                <td>
+                                                        <label class="custom-switch m-0">
+                                                                <input type="checkbox" class="custom-switch-input" checked="" disabled="disabled">
+                                                                <span class="custom-switch-indicator"></span>
+                                                        </label>
+                                                </td>
+                                                <td class="w-1">
+                                                        [% ttf.avatar(
+                                                                id => data.group.responsible_client_id,
+                                                                has_profile_picture => data.group.has_profile_picture,
+                                                                has_picture => data.group.has_picture,
+                                                                name => data.group.display_name ) %]
+                                                </td>
+                                                <td>
+                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => data.group.responsible_client_id ) %]" class="text-inherit">
+                                                                [% data.group.display_name %]
+                                                        </a>
+                                                </td>
+                                        </tr>
+                                        [% FOREACH dep = data.group.dependents %]
+                                                <tr>
+                                                        <td class="w-1">
+                                                                <label class="custom-switch m-0">
+                                                                        <input type="checkbox" value="[% dep.id %]" class="custom-switch-input">
+                                                                        <span class="custom-switch-indicator"></span>
+                                                                </label>
+                                                        </td>
+                                                        <td class="w-1">
+                                                                [% ttf.avatar(
+                                                                        id => dep.id,
+                                                                        has_profile_picture => dep.has_profile_picture,
+                                                                        has_picture => dep.has_picture,
+                                                                        name => dep.display_name ) %]
+                                                        </td>
+                                                        <td>
+                                                                <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => dep.id ) %]" class="text-inherit">
+                                                                        [% dep.display_name %]
+                                                                </a>
+                                                        </td>
+                                                </tr>
+                                        [% END %]
+                                </tbody>
+                        </table>
+                </div>
+        </div>
+</div>
+
+<div class="col-sm-3">
+
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-green mr-3">
+                                <i class="fe fe-dollar-sign"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">
+                                        $[% ttf.commify(data.membership.amount) %]
+                                </h4>
+                                <small class="text-muted">Precio mensual</small>
+                        </div>
+                </div>
+        </div>
+
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-yellow mr-3">
+                                <i class="fe fe-users"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">[% data.membership.display_group_requirements %]</h4>
+                                <small class="text-muted">
+                                        Lugares disponibles : [% data.group.available_dependent_clients %]
+                                </small>
+                        </div>
+                </div>
+        </div>
+
+</div>
+
+[% INCLUDE include/footer.tt %]

@@ -1,0 +1,7 @@
+[% INCLUDE include/header/main.tt %]
+
+<div class="col-sm-12">
+        [% INCLUDE include/usuarios/upsert.tt IS_STAFF_UPSERT=1 IS_INSERT=1 %]
+</div>
+
+[% INCLUDE include/footer.tt %]

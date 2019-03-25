@@ -1,0 +1,25 @@
+<!-- BEGIN INCLUDE/FOOTER -->
+
+                                </div><!-- END row -->
+                        </div><!-- END containter -->
+                </div><!-- END my-3 my-md-5 -->
+        </div><!-- END page-main -->
+
+        <footer class="footer">
+                <div class="container">
+                        <div class="row align-items-center flex-row-reverse">
+                                <div class="col-12 col-lg-auto mt-3 mt-lg-0 text-center">
+                                        [% cfg.GYM_NAME %]
+                                        [% IF cfg.TELEPHONE %]
+                                                &raquo;
+                                                [% cfg.TELEPHONE %]
+                                        [% END %]
+                                </div>
+                        </div>
+                </div>
+        </footer>
+
+</div><!-- END page -->
+
+</body>
+</html>

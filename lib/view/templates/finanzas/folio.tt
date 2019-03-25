@@ -1,0 +1,199 @@
+[% INCLUDE include/header/main.tt %]
+
+<div class="col-sm-8">
+
+        <div class="card">
+                <div class="card-status bg-blue"></div>
+                <div class="card-header">
+                        <h4 class="card-title">Detalles de folio</h4>
+                </div>
+                <div class="card-body">
+                        <div class="row">
+                                <div class="col-sm-4">
+                                        <div class="form-group">
+                                                <label class="form-label">Fecha y hora</label>
+                                                [% data.transaction.date_time %]
+                                        </div>
+                                </div>
+                                <div class="col-sm-4">
+                                        <div class="form-group">
+                                                <label class="form-label">Administrador</label>
+                                                [% data.transaction.admin_display_name %]
+                                        </div>
+                                </div>
+                                <div class="col-sm-4">
+                                        <div class="form-group">
+                                                <label class="form-label">M&eacute;todo de pago</label>
+                                                [% data.transaction.display_method %]
+                                        </div>
+                                </div>
+                        </div>
+                        [% IF data.transaction.notes %]
+                                <div class="row">
+                                        <div class="col-sm-12">
+                                                <div class="form-group">
+                                                        <label class="form-label">Notas</label>
+                                                        [% data.transaction.notes %]
+                                                </div>
+                                        </div>
+                                </div>
+                        [% END %]
+                </div>
+        </div>
+
+        <div class="card">
+                <div class="card-status bg-green"></div>
+                <div class="card-header">
+                        <h3 class="card-title">Pagos</h3>
+                </div>
+                <div class="table-responsive">
+                        <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                <thead>
+                                        <tr>
+                                                <th class="w-1"></th>
+                                                <th class="w-1"></th>
+                                                <th>Concepto</th>
+                                                <th>Periodo</th>
+                                                <th class="text-right">Pago</th>
+                                                <th class="text-right">Saldo a favor</th>
+                                                <th class="text-right">Restante actual</th>
+                                        </tr>
+                                </thead>
+                                <tbody>
+                                        [% FOREACH ch = data.remaining_charges %]
+                                                <tr>
+                                                        <td class="w-1">[% loop.count %].</td>
+                                                        <td class="w-1"><span class="fe fe-dollar-sign text-red"></span></td>
+                                                        <td>
+                                                                <a class="text-inherit" href="[% ttf.uri( c => 'finanzas', m => 'cobro', id => ch.id ) %]">
+                                                                        [% ch.concept.concept %]
+                                                                </a>
+                                                                <small class="d-block text-muted">
+                                                                        [% ch.concept.details %]
+                                                                </small>
+                                                        </td>
+                                                        <td>
+                                                                [% ch.year %]
+                                                                &raquo;
+                                                                [% ch.display_month %]
+                                                        </td>
+                                                        <td class="text-right">$0.00</td>
+                                                        <td class="text-right">$0.00</td>
+                                                        <td class="text-right[% IF ch.remaining_amount <= 0 %] amount-paid[% END %]">
+                                                                $[% ttf.commify(ch.remaining_amount) %]
+                                                        </td>
+                                                </tr>
+                                        [% END %]
+                                        [% SET REMAINING_AMOUNT = 0 %]
+                                        [% FOREACH pay = data.payments %]
+                                                [% REMAINING_AMOUNT = REMAINING_AMOUNT + pay.charge.remaining_amount %]
+                                                <tr>
+                                                        <td class="w-1">[% loop.count + data.remaining_charges.size %].</td>
+                                                        <td class="w-1"><span class="fe fe-dollar-sign text-green"></span></td>
+                                                        <td>
+                                                                <a class="text-inherit" href="[% ttf.uri( c => 'finanzas', m => 'cobro', id => pay.charge_id ) %]">
+                                                                        [% pay.charge.concept.concept %]
+                                                                </a>
+                                                                <small class="d-block text-muted">
+                                                                        [% pay.charge.concept.details %]
+                                                                </small>
+
+                                                                [% IF pay.is_cancelled %]
+                                                                        <div class="tag tag-danger" style="margin-top:5px">
+                                                                                Cancelado
+                                                                                <span class="tag-addon"><i class="fe fe-x"></i></span>
+                                                                        </div>
+                                                                        [% ttf.tip(pay.display_cancelled_details) %]
+                                                                [% END %]
+                                                        </td>
+                                                        <td>
+                                                                [% pay.charge.year %]
+                                                                &raquo;
+                                                                [% pay.charge.display_month %]
+                                                        </td>
+                                                        <td class="text-right">
+                                                                $[% ttf.commify(pay.payment_amount || 0) %]
+                                                                [% IF pay.is_cancelled %]
+                                                                        <br>
+                                                                        <span class="amount-paid text-red">$[% ttf.commify(pay.cancelled_payment_amount) %]</span>
+                                                                [% END %]
+                                                        </td>
+                                                        <td class="text-right">
+                                                                [% IF pay.debit_amount > 0 %]
+                                                                        [% ttf.tip('Pago con saldo a favor', icon => 'arrow-up-circle', color => 'green') %]
+                                                                [% END %]
+                                                                $[% ttf.commify(pay.debit_amount || 0) %]
+                                                                [% IF pay.is_cancelled %]
+                                                                        <br>
+                                                                        <span class="amount-paid text-red">$[% ttf.commify(pay.cancelled_payment_amount) %]</span>
+                                                                [% END %]
+                                                        </td>
+                                                        <td class="text-right[% IF pay.charge.remaining_amount <= 0 %] amount-paid[% END %]">
+                                                                $[% ttf.commify(pay.charge.remaining_amount) %]
+                                                        </td>
+                                                </tr>
+                                        [% END %]
+                                </tbody>
+                                <tfoot class="table-success h5">
+                                        <tr>
+                                                <td colspan="4">&nbsp;</td>
+                                                <td class="text-right">$[% ttf.commify(data.transaction.payment_amount || 0) %]</td>
+                                                <td class="text-right">$[% ttf.commify(data.transaction.debit_amount || 0) %]</td>
+                                                <td class="text-right[% IF REMAINING_AMOUNT <= 0 %] amount-paid[% END %]">$[% ttf.commify(REMAINING_AMOUNT) %]</td>
+                                        </tr>
+                                </tfoot>
+                        </table>
+                </div>
+        </div>
+
+</div>
+
+<div class="col-sm-4">
+
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-blue mr-3">
+                                <i class="fe fe-user"></i>
+                        </span>
+                        <div class="col-sm-6">
+                                <h4 class="m-0">
+                                        [% data.client.display_name %]
+                                </h4>
+                        </div>
+                        <div class="col pull-right text-right">
+                                <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => data.client.id ) %]" class="pull-right btn btn-secondary btn-sm">Estado de cuenta</a>
+                        </div>
+                </div>
+        </div>
+
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-success mr-3">
+                                <i class="fe fe-dollar-sign"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">
+                                        $[% ttf.commify(data.transaction.payment_amount) %]
+                                </h4>
+                                <small class="text-muted">Ingreso total</small>
+                        </div>
+                </div>
+        </div>
+
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-orange mr-3">
+                                <i class="fe fe-plus"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">
+                                        [% data.transaction.payment_count + data.remaining_charges.size %]
+                                </h4>
+                                <small class="text-muted">[% ttf.plural(data.transaction.payment_count + data.remaining_charges.size,'Concepto','Conceptos') %]</small>
+                        </div>
+                </div>
+        </div>
+
+</div>
+
+[% INCLUDE include/footer.tt %]

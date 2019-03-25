@@ -1,0 +1,129 @@
+<div class="col-sm-12">
+        <div class="card">
+                <div class="card-status bg-yellow"></div>
+                [% IF data.charts.daily_sales %]
+                        <div class="card-header">
+                                <h4 class="card-title">Ventas</h4>
+                        </div>
+                        <div id="DIV-DAILY-SALES-CHART" style="height:10rem;max-height:160px;position:relative;" class="c3"></div>
+                        [% data.charts.daily_sales %]
+                [% ELSE %]
+                        <div class="card-header">
+                                <h4 class="card-title">&Uacute;ltimos movimientos</h4>
+                        </div>
+                [% END %]
+                <div class="table-responsive">
+                        <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                <thead>
+                                        <tr>
+                                                <th class="w-1"></th>
+                                                <th class="w-1"></th>
+                                                <th>Fecha</th>
+                                                <th>Cliente</th>
+                                                <th>Administrador</th>
+                                                <th class="text-right">Cargo</th>
+                                                <th class="text-right">Descuento</th>
+                                                <th class="text-right">Pago</th>
+                                                <th class="text-right">Restante</th>
+                                                <th class="text-right">Ventas</th>
+                                        </tr>
+                                </thead>
+                                <tbody>
+                                        [% SET SHOW_MORE = 0 %]
+                                        [% SET TOTAL_CHARGED = 0 %]
+                                        [% SET TOTAL_DISCOUNT = 0 %]
+                                        [% SET TOTAL_PAID = 0 %]
+                                        [% SET TOTAL_REMAINING = 0 %]
+                                        [% FOREACH hh = data.history %]
+                                                <tr>
+                                                        <td width="1"><strong>[% loop.count %].</strong></td>
+                                                        <td width="1">
+                                                                [% IF hh.is_cancelled %]
+                                                                        [% ttf.tip('Cancelado', icon => 'x-circle', color => 'red') %]
+                                                                [% ELSIF hh.type_code == 'IN' && hh.is_return %]
+                                                                        [% ttf.tip('Devoluci&oacute;n', icon => 'rewind', color => 'purple') %]
+                                                                [% ELSIF hh.type_code == 'IN' %]
+                                                                        [% ttf.tip('Ingreso de inventario', icon => 'plus', color => 'green') %]
+                                                                [% ELSIF hh.type_code == 'OUT' %]
+                                                                        [% ttf.tip('Retiro de inventario', icon => 'minus', color => 'red') %]
+                                                                [% ELSIF hh.type_code == 'SALE' %]
+                                                                        [% ttf.tip('Venta', icon => 'shopping-cart', color => 'orange') %]
+                                                                [% END %]
+                                                        </td>
+                                                        <td [% IF hh.is_cancelled %]class="amount-paid"[% END %]>
+                                                                [% IF hh.charge_id %]
+                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'cobro', id => hh.charge_id) %]" class="text-inherit no-underline">
+                                                                                [% hh.date_time %]
+                                                                        </a>
+                                                                [% ELSE %]
+                                                                        [% hh.date_time %]
+                                                                [% END %]
+                                                        </td>
+                                                        <td [% IF hh.is_cancelled %]class="amount-paid"[% END %]>
+                                                                [% IF hh.client_id %]
+                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => hh.client_id) %]" class="text-inherit no-underline">
+                                                                                [% hh.client_display_name %]
+                                                                        </a>
+                                                                [% ELSE %]
+                                                                        -
+                                                                [% END %]
+                                                        </td>
+                                                        <td [% IF hh.is_cancelled %]class="amount-paid"[% END %]>
+                                                                [% hh.display_name %]
+                                                                [% IF hh.notes || hh.cancelled_notes %]
+                                                                        <small class="d-block text-muted">
+                                                                                [% IF hh.notes %][% hh.notes %]<br>[% END %]
+                                                                                [% IF hh.cancelled_notes %][% hh.cancelled_notes %]<br>[% END %]
+                                                                        </small>
+                                                                [% END %]
+                                                        </td>
+                                                        <td class="text-right">
+                                                                <span class="text-muted">$[% ttf.commify( hh.charge_amount || 0 ) %]</span>
+                                                                [% TOTAL_CHARGED = TOTAL_CHARGED + hh.charge_amount %]
+                                                        </td>
+                                                        <td class="text-right">
+                                                                <span class="text-muted">$[% ttf.commify( hh.discount_amount || 0 ) %]</span>
+                                                                [% TOTAL_DISCOUNT = TOTAL_DISCOUNT + hh.discount_amount %]
+                                                        </td>
+                                                        <td class="text-right">
+                                                                <span class="text-muted">$[% ttf.commify( hh.paid_amount || 0 ) %]</span>
+                                                                [% TOTAL_PAID = TOTAL_PAID + hh.paid_amount %]
+                                                        </td>
+                                                        <td class="text-right">
+                                                                <span class="text-muted">$[% ttf.commify( hh.remaining_amount || 0 ) %]</span>
+                                                                [% TOTAL_REMAINING = TOTAL_REMAINING + hh.remaining_amount %]
+                                                        </td>
+                                                        <td class="text-right">
+                                                                <span class="text-muted">[% hh.count %]</span>
+                                                        </td>
+                                                </tr>
+                                                [% IF TRUNCATE && loop.count >= TRUNCATE %]
+                                                        [% SHOW_MORE =1 %]
+                                                        [% LAST %]
+                                                [% END %]
+                                        [% END %]
+                                </tbody>
+
+                                <tfoot class="table-warning h5">
+                                        <tr>
+                                                <td colspan="5">&nbsp;</td>
+                                                <td class="text-right">$[% ttf.commify( TOTAL_CHARGED || 0 ) %]</td>
+                                                <td class="text-right">$[% ttf.commify( TOTAL_DISCOUNT || 0 ) %]</td>
+                                                <td class="text-right">$[% ttf.commify( TOTAL_PAID || 0 ) %]</td>
+                                                <td class="text-right">$[% ttf.commify( TOTAL_REMAINING || 0 ) %]</td>
+                                                <td>&nbsp;</td>
+                                        </tr>
+                                </tfoot>
+                        </table>
+                </div>
+                [% IF TRUNCATE && SHOW_MORE %]
+                        <div class="card-footer">
+                                <a href="[%ttf.uri( c => 'ventas', m => 'historial', id => p.id ) %]"
+                                        style="margin-top:10px;margin-bottom:10px"
+                                        class="pull-right btn btn-yellow ml-auto">
+                                        Ver movimientos anteriores
+                                </a>
+                        </div>
+                [% END %]
+        </div>
+</div>

@@ -1,0 +1,518 @@
+[% INCLUDE include/header/main.tt %]
+
+<div class="container">
+        <div class="row">
+                <div class="col">
+                        <div class="card p-3">
+                                <div class="d-flex align-items-center">
+                                        <span class="stamp stamp-md bg-blue mr-3">
+                                                <i class="fe fe-user"></i>
+                                        </span>
+                                        <div>
+                                                <h4 class="m-0">
+                                                        [% data.client.display_name %]
+                                                </h4>
+                                        </div>
+                                        <div style="position:absolute;right:1rem">
+                                                <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => data.charge.client_id ) %]" class="pull-right btn btn-secondary btn-sm">Estado de cuenta</a>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+                [% IF data.charge.item_type_code == 'VISITS' %]
+                        <div class="col">
+                                <div class="card p-3">
+                                        <div class="d-flex align-items-center">
+                                                <span class="stamp stamp-md bg-purple mr-3">
+                                                        <i class="fe fe-star"></i>
+                                                </span>
+                                                <div>
+                                                        <h4 class="m-0">
+                                                                [% data.charge.item_name %]
+                                                        </h4>
+                                                        [% UNLESS data.charge.is_cancelled %]
+                                                                <small class="text-muted">
+                                                                        [% IF data.charge.visits_expired %]
+                                                                                <small class="text-muted text-red">
+                                                                                        Expirado
+                                                                                </small>
+                                                                        [% ELSIF data.charge.visit_number > 0 %]
+                                                                                <small class="text-muted [% IF !data.charge.visits_remaining %]amount-paid text-red[% END %]">
+                                                                                        ( [% data.charge.visits_used %] de [% data.charge.visit_number %] )
+                                                                                </small>
+                                                                        [% END %]
+                                                                </small>
+                                                        [% END %]
+                                                </div>
+                                                <div style="position:absolute;right:1rem">
+                                                        <a href="[% ttf.uri( c => 'visitas', m => 'uso-de-cliente', id => data.charge.id ) %]" class="pull-right btn btn-secondary btn-sm">Uso de visitas</a>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+                [% END %]
+                <div class="col">
+                        <div class="card p-3">
+                                <div class="d-flex align-items-center">
+                                        [% IF data.charge.remaining_amount > 0 %]
+                                                <span class="stamp stamp-md bg-danger mr-3">
+                                                        <i class="fe fe-alert-circle"></i>
+                                                </span>
+                                                <div>
+                                                        <h4 class="m-0">
+                                                                $[% ttf.commify(data.charge.remaining_amount) %]
+                                                        </h4>
+                                                        <small class="text-muted">Adeudo</small>
+                                                </div>
+                                                <div style="position:absolute;right:1rem">
+                                                        <a href="[% ttf.uri( c => 'ventas', m => 'punto-de-venta', id => data.charge.client_id ) %]" class="pull-right btn btn-secondary btn-sm">Pagar</a>
+                                                </div>
+                                        [% ELSE %]
+                                                <span class="stamp stamp-md bg-success mr-3">
+                                                        <i class="fe fe-check"></i>
+                                                </span>
+                                                <div>
+                                                        <h4 class="m-0">
+                                                                $[% ttf.commify(0) %]
+                                                        </h4>
+                                                        <small class="text-muted">Sin adeudos</small>
+                                                </div>
+                                        [% END %]
+                                </div>
+                        </div>
+                </div>
+        </div>
+</div>
+
+<div class="col">
+        <div class="card">
+                <div class="card-status bg-blue"></div>
+                <div class="card-header">
+                        <h4 class="card-title">Detalles de cobro</h4>
+                </div>
+                <div class="card-body">
+                        <fieldset class="form-fieldset">
+                                <div class="row">
+                                        <div class="col-sm-4">
+                                                <div class="form-group">
+                                                        <label class="form-label">Concepto</label>
+                                                        [% IF data.charge.type_code == 'I' %]
+                                                                <a class="text-inherit" href="[% ttf.uri( controller => 'ventas', m => 'ver', id => data.charge.item_id ) %]">
+                                                                        [% data.charge.concept.concept %]
+                                                                </a>
+                                                        [% ELSIF data.charge.type_code == 'M' %]
+                                                                <a class="text-inherit" href="[% ttf.uri( controller => 'membresias', m => 'ver', id => data.charge.membership_id ) %]">
+                                                                        [% data.charge.concept.concept %]
+                                                                </a>
+                                                        [% ELSIF data.charge.type_code == 'P' %]
+                                                                Prepago
+                                                        [% ELSE %]
+                                                                ERROR
+                                                                [% STOP %]
+                                                        [% END %]
+                                                        <br>
+                                                        [% data.charge.year %] &raquo; [% data.charge.display_month %]
+                                                </div>
+                                        </div>
+                                        <div class="col-sm-4">
+                                                <div class="form-group">
+                                                        <label class="form-label">Detalles</label>
+                                                        [% data.charge.concept.details || '-' %]
+                                                </div>
+                                        </div>
+                                        <div class="col-sm-4">
+                                                <div class="form-group">
+                                                        <label class="form-label">Periodo</label>
+                                                        [% data.charge.display_month %] / [% data.charge.year %]
+                                                        <br>
+                                                        [% data.charge.creation_date_time %]
+                                                </div>
+                                        </div>
+                                </div>
+                        </fieldset>
+                        <fieldset class="form-fieldset-plain">
+                                <div class="row">
+                                        <div class="col-sm-4">
+                                                <div class="form-group">
+                                                        <label class="form-label">Precio</label>
+                                                        $[% ttf.commify(data.charge.amount) %]
+                                                        [% IF data.charge.discounts %]
+                                                        <br>
+                                                        <br>
+                                                                <label class="form-label">
+                                                                        <span class="fe fe-alert-circle"></span>
+                                                                        [% data.charge.discounts.size %]
+                                                                        [% ttf.plural(data.charge.discounts.size, 'Descuento', 'Descuentos') %]
+                                                                </label>
+                                                                $[% ttf.commify(data.charge.original_amount) %]
+                                                                -
+                                                                $[% ttf.commify(data.charge.discount_amount) %]
+                                                        [% END %]
+                                                </div>
+                                        </div>
+                                        <div class="col-sm-4">
+                                                <div class="form-group">
+                                                        <label class="form-label">Pagos</label>
+                                                        $[% ttf.commify(data.charge.paid) %]
+                                                </div>
+                                        </div>
+                                        <div class="col-sm-4">
+                                                <div class="form-group">
+                                                        <label class="form-label">Restante</label>
+                                                        [% IF data.charge.remaining_amount %]
+                                                                $[% ttf.commify(data.charge.remaining_amount) %]
+                                                        [% ELSE %]
+                                                                <span style="text-decoration:line-through;color:#9aa0ac;" class="text-right">$0.00</span>
+                                                        [% END %]
+                                                </div>
+                                        </div>
+                                </div>
+                        </fieldset>
+                </div>
+        </div>
+</div>
+
+<script>
+require(['jquery'], function($) {
+
+        $(document).ready( function() {
+
+                $("form[name=default] input[name=amount]").keyup( function() {
+
+                        var DISCOUNT_AMOUNT = this.value.replace(/\$|,/g, '');
+                        var REMAINING = parseFloat("[% data.charge.remaining_amount %]") - parseFloat(DISCOUNT_AMOUNT);
+
+                        if ( isNaN(REMAINING) ) REMAINING = parseFloat("[% data.charge.remaining_amount %]");
+
+                        $("#SPAN-REMAINING-AMOUNT").removeClass();
+
+                        if ( parseFloat(REMAINING) === 0 ) {
+                                $("#SPAN-REMAINING-AMOUNT").addClass("amount-paid");
+                        }
+                        else if ( parseFloat(REMAINING) <= 0 ) {
+                                $("#SPAN-REMAINING-AMOUNT").addClass("text-red");
+                        }
+
+                        $("#SPAN-REMAINING-AMOUNT").html(' $' + __ADMINFIT__.commify(REMAINING.toFixed(2)) );
+
+                });
+
+                $(".I-SHOW-DELETE-FORM").click( function() {
+                        var DELETE_ID = $(this).data("delete_id");
+                        $(this).remove();
+                        $("#DELETE-FORM-" + DELETE_ID).fadeIn();
+                })
+
+        });
+
+});
+</script>
+
+[% IF data.charge.remaining_amount > 0 && data.charge.type_code != 'P' %]
+
+        <div class="col-sm-4">
+                <form name="default" method="post" action="[% ttf.uri( c => 'finanzas', m => 'add-discount-do') %]">
+                <input type="hidden" name="id" value="[% p.id %]">
+                        <div class="card p-3" style="min-height:411px">
+                                <div class="card-status bg-green"></div>
+                                <div class="card-alert alert mb-0" id="FORM-STATUS-default" style="display:none"></div>
+                                <div class="col-sm-12">
+                                        <div class="form-group">
+                                                <label class="form-label">
+                                                        Tipo de descuento
+                                                        <span class="text-red">*</span>
+                                                </label>
+                                                <select name="discount_id" class="form-control custom-select" placeholder="Descuento">
+                                                        [% FOREACH disc = data.discounts %]
+                                                                <option [% ttf.selected(disc.is_permanent) %] value="[% disc.id %]">[% disc.name %]</option>
+                                                        [% END %]
+                                                </select>
+                                        </div>
+                                        <div class="form-group">
+                                                <label class="form-label">Cantidad</label>
+                                                <input type="text" name="amount" class="form-control text-right" data-mask="000,000,000.00" data-mask-reverse="true" maxlength="8" placeholder="$[% ttf.commify(data.charge.remaining_amount) %]">
+                                                <small class="text-muted text-right pull-right">
+                                                        Esta cantidad sera <b>descontada</b> del total restante.
+                                                        <br>
+                                                </small>
+                                                <br>
+                                                <div class="text-right">
+                                                        Restante : <span id="SPAN-REMAINING-AMOUNT">$[% ttf.commify(data.charge.remaining_amount) %]</span>
+                                                        <br>
+                                                </div>
+                                        </div>
+                                        <div class="form-group">
+                                                <label class="form-label">Notas</label>
+                                                <textarea name="notes" rows="2" class="form-control" placeholder="Notas"></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                                <button type="submit" style="margin-top:10px;margin-bottom:10px" class="pull-right btn btn-success ml-auto">Agregar descuento</button>
+                                        </div>
+                                </div>
+                        </div>
+                </form>
+                [% v.pre %]
+        </div>
+
+[% END %]
+
+<div class="col-sm-12">
+        <div class="page-header">
+                <h1 class="page-title">Historial de pagos y descuentos</h1>
+        </div>
+</div>
+
+<div class="col-sm-12">
+        <div class="card">
+                <div class="card-status bg-yellow"></div>
+                <div class="card-header">
+                        <h3 class="card-title">Historial</h3>
+                </div>
+                <div class="table-responsive">
+                        <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                <thead>
+                                        <tr>
+                                                <th class="w-1"></th>
+                                                <th>Fecha</th>
+                                                <th>Tipo</th>
+                                                <th>Administrador</th>
+                                                <th>Cantidad</th>
+                                                <th class="text-right" width="30%">Restante</th>
+                                        </tr>
+                                </thead>
+                                <tbody>
+                                        <tr class="table-info">
+                                                <td>
+                                                        <span class="fe fe-plus"></span>
+                                                </td>
+                                                <td>
+                                                        [% IF data.charge.is_cancelled %]
+                                                                [% data.charge.cancelled_date_time %]
+                                                                <br>
+                                                                <span class="amount-paid text-red">[% data.charge.creation_date_time %]</span>
+                                                                <br>
+                                                                <div class="tag tag-danger">
+                                                                        Cancelado
+                                                                        <span class="tag-addon"><i class="fe fe-x"></i></span>
+                                                                </div>
+                                                                [% ttf.tip(data.charge.display_cancelled_details) %]
+                                                        [% ELSE %]
+                                                                [% data.charge.creation_date_time %]
+                                                        [% END %]
+                                                </td>
+                                                <td>Cobro</td>
+                                                <td>[% data.charge.admin_id ? data.charge.admin_display_name : '-' %]</td>
+                                                <td>
+                                                        [% IF data.charge.is_cancelled %]
+                                                                $[% ttf.commify(data.charge.cancelled_charge_amount) %]
+                                                                <br>
+                                                                <span class="amount-paid text-red">$[% ttf.commify(data.charge.original_amount) %]</span>
+                                                        [% ELSE %]
+                                                                $[% ttf.commify(data.charge.original_amount) %]
+                                                        [% END %]
+                                                </td>
+                                                <td class="text-right" width="30%">
+                                                        $[% ttf.commify(data.charge.original_amount) %]
+                                                        [% IF data.charge.is_prepayment %]
+                                                                <br>
+                                                                [% ttf.tip('No es posible cancelar un prepago.', icon => 'x-circle', color => 'red') %]
+                                                        [% ELSIF !data.charge.is_cancelled %]
+                                                                <br>
+                                                                <a href="javascript:;" data-delete_id="[% data.charge.id %]" class="I-SHOW-DELETE-FORM no-underline"><i class="fe fe-x mr-1 text-red"></i></a>
+                                                                <div id="DELETE-FORM-[% data.charge.id %]" style="display:none">
+
+                                                                        [% IF data.history.size %]
+                                                                                <div class="alert alert-warning" role="alert" style="width:100%">
+                                                                                        <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                                                                        <b>Cancelaci&oacute;n de cobro</b>
+                                                                                        <br>
+                                                                                        Al cancelar el cobro tambien se
+                                                                                        cancelar&aacute;n<br>
+                                                                                        los pagos y descuentos asociados.
+                                                                                </div>
+                                                                        [% END %]
+
+                                                                        <form method="post" action="[% ttf.uri( c => 'finanzas', m => 'delete-charge-do' ) %]">
+                                                                                <input type="hidden" name="id" value="[% data.charge.id %]">
+                                                                                <div class="form-group">
+                                                                                        <textarea name="notes" rows="2" class="form-control" placeholder="Notas"></textarea>
+                                                                                </div>
+                                                                                [% IF data.charge.type_code == 'I' && data.charge.item_use_inventory %]
+                                                                                        <div class="form-group">
+                                                                                                <label class="custom-switch">
+                                                                                                        <input type="checkbox" name="BOOL-return_to_inventory" class="custom-switch-input">
+                                                                                                        <span class="custom-switch-indicator"></span>
+                                                                                                        <span class="custom-switch-description">Regresar art&iacute;culo al inventario</span>
+                                                                                                </label>
+                                                                                        </div>
+                                                                                [% END %]
+                                                                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                                                        <i class="fe fe-x mr-1"></i>
+                                                                                        Eliminar cobro
+                                                                                </button>
+                                                                        </form>
+
+                                                                </div>
+                                                        [% END %]
+                                                </td>
+                                        <tr>
+                                        [% IF data.history.size %]
+                                                [% SET CHARGE_REMAINING = data.charge.original_amount %]
+                                                [% FOREACH hh = data.history %]
+                                                        [% IF hh.type_code == 'DISCOUNT' %]
+                                                                [% CHARGE_REMAINING = ( CHARGE_REMAINING - hh.discount_amount ) %]
+                                                                <tr>
+                                                                        <td>
+                                                                                <span class="fe fe-minus text-red"></span>
+                                                                        </td>
+                                                                        <td>
+                                                                                [% IF hh.is_cancelled %]
+                                                                                        [% hh.cancelled_date_time %]
+                                                                                        <br>
+                                                                                        <span class="amount-paid text-red">[% hh.date_time %]</span>
+                                                                                        <br>
+                                                                                        <div class="tag tag-danger">
+                                                                                                Cancelado
+                                                                                                <span class="tag-addon"><i class="fe fe-x"></i></span>
+                                                                                        </div>
+                                                                                        [% ttf.tip(hh.display_cancelled_details) %]
+                                                                                [% ELSE %]
+                                                                                        [% hh.date_time %]
+                                                                                [% END %]
+                                                                        </td>
+                                                                        <td>
+                                                                                Descuento
+                                                                                <br>
+                                                                                <small class="text-muted">[% hh.discount_name %]</small>
+                                                                                [% ttf.tip('<i class="fe fe-user"></i> ' _ hh.admin_display_name _ '<br>' _ hh.discount_notes) %]
+                                                                        </td>
+                                                                        <td>[% hh.admin_display_name %]</td>
+                                                                        <td>
+                                                                                $[% ttf.commify(hh.discount_amount) %]
+                                                                                [% IF hh.is_cancelled %]
+                                                                                        <br>
+                                                                                        <span class="amount-paid text-red">$[% ttf.commify(hh.cancelled_discount_amount) %]</span>
+                                                                                [% END %]
+                                                                        </td>
+                                                                        <td class="text-right">
+                                                                                [% IF CHARGE_REMAINING %]
+                                                                                        $[% ttf.commify(CHARGE_REMAINING) %]
+                                                                                [% ELSE %]
+                                                                                        <span style="text-decoration:line-through;color:#9aa0ac;" class="text-right">$0.00</span>
+                                                                                [% END %]
+                                                                                [% UNLESS hh.is_cancelled %]
+                                                                                        <br>
+                                                                                        <a href="javascript:;" data-delete_id="[% hh.id %]" class="I-SHOW-DELETE-FORM no-underline"><i class="fe fe-x mr-1 text-red"></i></a>
+                                                                                        <div id="DELETE-FORM-[% hh.id %]" style="display:none">
+                                                                                                <form method="post" action="[% ttf.uri( c => 'finanzas', m => 'delete-discount-do' ) %]">
+                                                                                                        <input type="hidden" name="id" value="[% hh.id %]">
+                                                                                                        <div class="form-group">
+                                                                                                                <textarea name="notes" rows="2" class="form-control" placeholder="Notas"></textarea>
+                                                                                                        </div>
+                                                                                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                                                                                <i class="fe fe-x mr-1"></i>
+                                                                                                                Eliminar descuento
+                                                                                                        </button>
+                                                                                                </form>
+                                                                                        </div>
+                                                                                [% END %]
+                                                                        </td>
+                                                                </tr>
+                                                        [% ELSIF hh.type_code == 'PAYMENT' %]
+                                                                [% CHARGE_REMAINING = ( CHARGE_REMAINING - ( hh.payment_amount + hh.debit_amount ) ) %]
+                                                                [% IF data.charge.is_prepayment %][% CHARGE_REMAINING = 0 %][% END %]
+                                                                <tr>
+                                                                        <td><span class="fe fe-dollar-sign text-green"></span></td>
+                                                                        <td>
+                                                                                [% IF hh.is_cancelled %]
+                                                                                        [% hh.cancelled_date_time %]
+                                                                                        <br>
+                                                                                        <span class="amount-paid text-red">[% hh.date_time %]</span>
+                                                                                        <br>
+                                                                                        <div class="tag tag-danger">
+                                                                                                Cancelado
+                                                                                                <span class="tag-addon"><i class="fe fe-x"></i></span>
+                                                                                        </div>
+                                                                                        [% ttf.tip(hh.display_cancelled_details) %]
+                                                                                [% ELSE %]
+                                                                                        [% hh.date_time %]
+                                                                                [% END %]
+                                                                        </td>
+                                                                        <td>
+                                                                                <a href="[% ttf.uri( c => 'finanzas', m => 'folio', id => hh.transaction_id ) %]" class="text-inherit">Pago</a>
+                                                                                <small class="d-block text-muted">
+                                                                                        [% hh.display_method %]
+                                                                                        [% IF hh.transaction_notes %][% ttf.tip(hh.transaction_notes) %][% END %]
+                                                                                </small>
+                                                                        </td>
+                                                                        <td>[% hh.admin_display_name %]</td>
+                                                                        <td>
+                                                                                [% IF hh.debit_amount > 0 && hh.payment_amount > 0 %]
+                                                                                        $[% ttf.commify(hh.payment_amount + hh.debit_amount) %]
+                                                                                        <br>
+                                                                                        <small class="d-block text-muted">
+                                                                                                $[% ttf.commify(hh.debit_amount) %]
+                                                                                                [% ttf.tip('Pago con saldo a favor', icon => 'arrow-up-circle', color => 'green') %]
+                                                                                        </small>
+                                                                                        [% IF hh.payment_amount > 0 %]
+                                                                                                <small class="d-block text-muted">
+                                                                                                        $[% ttf.commify(hh.payment_amount) %]
+                                                                                                        [% ttf.tip('Pago', icon => 'dollar-sign', color => 'green') %]
+                                                                                                </small>
+                                                                                        [% END %]
+                                                                                [% ELSIF hh.debit_amount > 0 %]
+                                                                                        $[% ttf.commify(hh.debit_amount) %]
+                                                                                        [% ttf.tip('Pago con saldo a favor', icon => 'arrow-up-circle', color => 'green') %]
+                                                                                [% ELSE %]
+                                                                                        $[% ttf.commify(hh.payment_amount) %]
+                                                                                [% END %]
+                                                                                [% IF hh.is_cancelled %]
+                                                                                        <br>
+                                                                                        [% IF hh.cancelled_payment_amount > 0 %]
+                                                                                                <small class="d-block amount-paid text-red">$[% ttf.commify(hh.cancelled_payment_amount) %]</small>
+                                                                                        [% END %]
+                                                                                        [% IF hh.cancelled_debit_amount > 0 %]
+                                                                                                <small class="d-block amount-paid text-green">
+                                                                                                        $[% ttf.commify(hh.cancelled_debit_amount) %]
+                                                                                                        [% ttf.tip('Pago con saldo a favor', icon => 'arrow-up-circle', color => 'green') %]
+                                                                                                </small>
+                                                                                        [% END %]
+                                                                                [% END %]
+                                                                        </td>
+                                                                        <td class="text-right">
+                                                                                [% IF CHARGE_REMAINING %]
+                                                                                        $[% ttf.commify(CHARGE_REMAINING) %]
+                                                                                [% ELSE %]
+                                                                                        <span style="text-decoration:line-through;color:#9aa0ac;" class="text-right">$0.00</span>
+                                                                                [% END %]
+                                                                                [% IF data.charge.is_prepayment %]
+                                                                                        <br>
+                                                                                        [% ttf.tip('No es posible cancelar un prepago.', icon => 'x-circle', color => 'red') %]
+                                                                                [% ELSIF !hh.is_cancelled %]
+                                                                                        <br>
+                                                                                        <a href="javascript:;" data-delete_id="[% hh.id %]" class="I-SHOW-DELETE-FORM no-underline"><i class="fe fe-x mr-1 text-red"></i></a>
+                                                                                        <div id="DELETE-FORM-[% hh.id %]" style="display:none">
+                                                                                                <form method="post" action="[% ttf.uri( c => 'finanzas', m => 'delete-payment-do' ) %]">
+                                                                                                        <input type="hidden" name="id" value="[% hh.id %]">
+                                                                                                        <div class="form-group">
+                                                                                                                <textarea name="notes" rows="2" class="form-control" placeholder="Notas"></textarea>
+                                                                                                        </div>
+                                                                                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                                                                                <i class="fe fe-x mr-1"></i>
+                                                                                                                Eliminar pago
+                                                                                                        </button>
+                                                                                                </form>
+                                                                                        </div>
+                                                                                [% END %]
+                                                                        </td>
+                                                                </tr>
+                                                        [% END %]
+                                                [% END %]
+                                        [% END %]
+                                </tbody>
+                        </table>
+                </div>
+        </div>
+</div>
+
+[% INCLUDE include/footer.tt %]

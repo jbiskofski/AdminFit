@@ -1,0 +1,11 @@
+[% INCLUDE include/header/main.tt %]
+[% INCLUDE include/clientes/menu.tt %]
+
+[% IF data.memberships && data.user %]
+        <div class="col">
+                [% IF !data.user.is_client %][% STOP %][% END %]
+                [% INCLUDE include/usuarios/upsert.tt IS_CLIENT_UPSERT=1 IS_UPDATE=1 %]
+        </div>
+[% END %]
+
+[% INCLUDE include/footer.tt %]

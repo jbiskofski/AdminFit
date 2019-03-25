@@ -1,0 +1,117 @@
+[% INCLUDE include/header/main.tt %]
+[% INCLUDE include/configuracion/menu.tt %]
+
+<div class="col">
+        <div class="card">
+                <form class="form" name="default" action="[% ttf.uri( c => 'configuracion', m => 'update-do' ) %]" method="post" enctype="multipart/form-data">
+                        <div class="card-status bg-blue"></div>
+                        <div class="card-header">
+                                <h3 class="card-title">Configuraci&oacute;n general</h3>
+                        </div>
+                        <div class="card-body p-6">
+                                <div class="form-group">
+                                        <label class="form-label">Nombre de gimnasio</label>
+                                        <input type="text" class="form-control" placeholder="Nombre de gimnasio" name="gym_name" value="[% cfg.GYM_NAME || cfg.CUSTOMER %]">
+                                </div>
+
+                                <div class="form-group">
+                                        <label class="form-label">Tel&eacute;fono</label>
+                                        <input type="text" name="telephone" class="form-control" data-mask="0000-00-00-00" data-mask-clearifnotmatch="true" placeholder="0000-00-00-00" maxlength="13" value="[% cfg.TELEPHONE %]">
+                                </div>
+
+                                <div class="form-group">
+                                        <div class="form-label">Logo principal</div>
+                                        <div class="custom-file">
+                                                <input type="file" class="custom-file-input" name="logo_file">
+                                                <label class="custom-file-label" for="logo_file"></label>
+                                        </div>
+                                </div>
+
+                                <div class="form-group">
+                                        <div class="form-label">Logo mediano</div>
+                                        <div class="custom-file">
+                                                <input type="file" class="custom-file-input" name="medium_logo_file">
+                                                <label class="custom-file-label" for="medium_logo_file"></label>
+                                        </div>
+                                </div>
+
+                                <div class="form-group">
+                                        <div class="form-label">Logo chico</div>
+                                        <div class="custom-file">
+                                                <input type="file" class="custom-file-input" name="small_logo_file">
+                                                <label class="custom-file-label" for="small_logo_file"></label>
+                                        </div>
+                                </div>
+                                <button class="btn btn-primary btn-block">Guardar</button>
+                        </div>
+                </form>
+                [% v.pre %]
+        </div>
+</div>
+
+[% IF cfg.HAS_MAIN_LOGO || cfg.HAS_MEDIUM_LOGO || cfg.HAS_SMALL_LOGO %]
+<div class="col-sm-6">
+        <div class="row">
+
+                [% IF cfg.HAS_MAIN_LOGO %]
+                        <div class="col-sm-12">
+                                <div class="card">
+                                        <div class="card-header">
+                                                <h3 class="card-title">Logo principal</h3>
+                                        </div>
+                                        <div class="card-body">
+                                                <img src="[% ttf.s3( id => 'conf/400PX/MAIN-LOGO' ) %]">
+                                        </div>
+                                        <div class="card-footer text-right">
+                                                <a href="[% ttf.uri( c => 'configuracion', m => 'eliminar-logo-do', which => 'MAIN' ) %]" class="btn btn-outline-danger btn-sm">
+                                                        <i class="fe fe-x mr-1"></i>
+                                                        Eliminar
+                                                </a>
+                                        </div>
+                                </div>
+                        </div>
+                [% END %]
+
+                [% IF cfg.HAS_MEDIUM_LOGO %]
+                        <div class="col-sm-6">
+                                <div class="card">
+                                        <div class="card-header">
+                                                <h3 class="card-title">Logo mediano</h3>
+                                        </div>
+                                        <div class="card-body">
+                                                <img src="[% ttf.s3( id => 'conf/THUMBNAILS/MEDIUM-LOGO' ) %]">
+                                        </div>
+                                        <div class="card-footer text-right">
+                                                <a href="[% ttf.uri( c => 'configuracion', m => 'eliminar-logo-do', which => 'MEDIUM' ) %]" class="btn btn-outline-danger btn-sm">
+                                                        <i class="fe fe-x mr-2"></i>
+                                                        Eliminar
+                                                </a>
+                                        </div>
+                                </div>
+                        </div>
+                [% END %]
+
+                [% IF cfg.HAS_SMALL_LOGO %]
+                        <div class="col-sm-6">
+                                <div class="card">
+                                        <div class="card-header">
+                                                <h3 class="card-title">Logo chico</h3>
+                                        </div>
+                                        <div class="card-body">
+                                                <img src="[% ttf.s3( id => 'conf/THUMBNAILS/SMALL-LOGO' ) %]">
+                                        </div>
+                                        <div class="card-footer text-right">
+                                                <a href="[% ttf.uri( c => 'configuracion', m => 'eliminar-logo-do', which => 'SMALL' ) %]" class="btn btn-outline-danger btn-sm">
+                                                        <i class="fe fe-x mr-2"></i>
+                                                        Eliminar
+                                                </a>
+                                        </div>
+                                </div>
+                        </div>
+                [% END %]
+
+        </div>
+</div>
+[% END %]
+
+[% INCLUDE include/footer.tt %]

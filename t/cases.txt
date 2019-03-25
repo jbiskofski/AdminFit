@@ -1,0 +1,85 @@
+configuracion general
+        logos, nombre, telefono
+        eliminar logo
+
+detalles adicionales
+        agregar, editar, deshabilitar
+        usar en cliente, staff y producto
+
+staff
+        agregar, actualizar, venderles algo
+
+membresias
+        agregar
+        actualizar
+        deshabilitar
+        grupal, cuantos
+        agregar cliente de membresia normal
+                - checar q si pones un dia de renovacion anterior te cobre el mes siguiente ( si eso eliges )
+        agregar responsable y dependiente
+                - si agregas responsale clic en en dependiente, te debe decir q no hay responsables posibles
+        cambiar responsable y dependiente
+        no le puedes meter mas dependientes a un responsable q ya esta lleno
+
+descuentos, agregar, actualizar, deshabilitar,
+        amarrar a membresia, verificar
+        no puedes eliminar/deshabilitar el descuento general
+        trimestral, cobrar
+        cancelar descuento
+
+pagos
+        cancealar pago
+
+cobro
+        cancelar cobro
+
+punto-de-venta
+        adeudo anterior
+        prepago
+        vender inventario
+        vender promocion ( descuento )
+        parcialidad
+        cero
+
+ventas
+        agregar articulo
+        actualizar
+        con inventario, sin inventario
+        agregar inventario, vender, restar inventario
+        devolucion ( cancelar )
+        ver historial
+        mas de 10 historial
+        detalles adicionales
+
+pagos
+        pagar algo
+        cancelar
+
+cobros
+        cobrar producto sin inventario
+        con inventario
+        cancelar
+        devolucion al cancelar
+
+prepagos
+        crear prepago
+        cancelar prepago - NO SE PUEDE
+
+buscador
+        buscar
+
+asistencia
+        pasar asistencia
+
+finanzas
+        resumen
+        distintos filtros en todos lados
+
+inicio default
+        q tenga sentido?
+
+clientes default
+        probar filtros
+
+notificaciones de arriba
+        cuando se renuevan las membresias automaticamente

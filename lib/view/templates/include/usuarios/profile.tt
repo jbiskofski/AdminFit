@@ -1,0 +1,161 @@
+<div class="row">
+        <div class="col-sm-4">
+                <div class="card card-profile">
+                        <div class="card-header"
+                                [% IF cfg.HAS_MAIN_LOGO %]style="background-image: url([% ttf.s3( id => 'conf/400PX/MAIN-LOGO' ) %])"[% END %]></div>
+                        <div class="card-body text-center">
+                                [% ttf.avatar(
+                                        id => data.user.id,
+                                        has_profile_picture => data.user.has_profile_picture,
+                                        has_picture => data.user.has_picture,
+                                        name => data.user.display_name,
+                                        classes => 'avatar-xxl card-profile-img' ) %]
+                                <h3 class="mb-3">[% data.user.display_name %]</h3>
+                                <p class="mb-4">
+                                        [% data.user.age %] A&ntilde;os
+                                        [% IF data.user.email %]
+                                                <br>[% data.user.email %]
+                                        [% END %]
+                                        [% IF data.user.telephone %]
+                                                <br>[% data.user.telephone %]
+                                        [% END %]
+                                        <p class="text-muted mb-0">Miembro desde : [% data.user.create_date %]</p>
+                                </p>
+                        </div>
+                </div>
+                <div class="card p-3">
+                        <div class="d-flex align-items-center">
+                                <span class="stamp stamp-md bg-blue mr-3">
+                                        [% IF data.user.is_client %]
+                                                <i class="fe fe-repeat"></i>
+                                        [% ELSE %]
+                                                <i class="fe fe-user-check"></i>
+                                        [% END %]
+                                </span>
+                                <div>
+                                        [% IF data.user.is_client %]
+                                                <h4 class="m-0">[% data.membership.name %]</h4>
+                                                <small class="d-block text-muted">Membres&iacute;a</small>
+                                        [% ELSE %]
+                                                <h4 class="m-0">Staff</h4>
+                                                <small class="d-block text-muted">
+                                                        [% IF data.user.is_admin %]Administrador[% END %]
+                                                        [% IF data.user.is_admin && data.user.is_coach %] - [% END %]
+                                                        [% IF data.user.is_coach %]Entrenador[% END %]
+                                                </small>
+                                        [% END %]
+                                </div>
+                        </div>
+                </div>
+                <a href="[% ttf.uri( c => 'asistencia', m => 'ver', id => p.id, month => data.calendar.month, year => data.calendar.year ) %]" class="text-inherit no-underline">
+                        <div class="card p-3">
+                                <div class="d-flex align-items-center">
+                                        <span class="stamp stamp-md bg-red mr-3">
+                                                <i class="fe fe-check"></i>
+                                        </span>
+                                        <div>
+                                                <h4 class="m-0">
+                                                        [% data.calendar.totals.attendance_days || 0 %]
+                                                        [% ttf.plural(data.calendar.totals.attendance_days, 'D&iacute;a', 'D&iacute;as') %]
+                                                 </h4>
+                                                <small class="d-block text-muted">
+                                                        Asistencia del mes
+                                                        [% IF data.calendar.totals.attendance_total > data.calendar.totals.attendance_days %]
+                                                                &nbsp;
+                                                                ( [% data.calendar.totals.attendance_total %] visitas en total )
+                                                        [% END %]
+                                                </small>
+                                        </div>
+                                </div>
+                        </div>
+                </a>
+                <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => p.id, month => data.calendar.month, year => data.calendar.year ) %]" class="text-inherit no-underline">
+                        <div class="card p-3">
+                                <div class="d-flex align-items-center">
+                                        <span class="stamp stamp-md bg-green mr-3">
+                                                <i class="fe fe-dollar-sign"></i>
+                                        </span>
+                                        <div>
+                                                <h4 class="m-0">$[% ttf.commify(data.calendar.totals.payments) %]</h4>
+                                                <small class="d-block text-muted">Ingresos del mes</small>
+                                        </div>
+                                </div>
+                        </div>
+                </a>
+        </div>
+
+        <div class="col-sm-8">
+
+                <div class="card">
+                        <div class="card-status bg-blue"></div>
+                        <div class="card-header">
+                                <h3 class="card-title">[% data.calendar.display_month %] &raquo; [% data.calendar.year %]</h3>
+                                <div class="card-options">
+                                        <a href="[% ttf.uri( c => cfg.ACCESSING_CONTROLLER, m => 'perfil', id => p.id, month => data.prev_next.prev.month, year => data.prev_next.prev.year) %]" class="btn btn-secondary btn-sm">
+                                                [% ttf.tip(data.prev_next.prev.display_month, icon => 'arrow-left', color => 'gray') %]
+                                        </a>
+                                        &nbsp;
+                                        <a href="[% ttf.uri( c => cfg.ACCESSING_CONTROLLER, m => 'perfil', id => p.id, month => data.prev_next.next.month, year => data.prev_next.next.year) %]" class="btn btn-secondary btn-sm">
+                                                [% ttf.tip(data.prev_next.next.display_month, icon => 'arrow-right', color => 'gray') %]
+                                        </a>
+                                </div>
+                        </div>
+                        <div class="card-body">
+                                <div class="table-responsive push">
+                                        <table class="table table-bordered">
+                                                <thead>
+                                                        <tr>
+                                                                <th width="14%" style="border-top:solid 1px #dee2e6">Dom</th>
+                                                                <th width="14%" style="border-top:solid 1px #dee2e6">Lun</th>
+                                                                <th width="14%" style="border-top:solid 1px #dee2e6">Mar</th>
+                                                                <th width="14%" style="border-top:solid 1px #dee2e6">Mie</th>
+                                                                <th width="14%" style="border-top:solid 1px #dee2e6">Jue</th>
+                                                                <th width="14%" style="border-top:solid 1px #dee2e6">Vie</th>
+                                                                <th width="14%" style="border-top:solid 1px #dee2e6">Sab</th>
+                                                        </tr>
+                                                </thead>
+                                                <tbody>
+                                                        [% FOREACH week = data.calendar.weeks %]
+                                                                <tr>
+                                                                        [% FOREACH day = week %]
+                                                                                <td width="14%" class="table-calendar-day [% IF day.day && ( day.data.attendance || day.data.payments ) %]bg-blue-lightest[% END %]">
+                                                                                        [% IF day.day %]
+                                                                                                <div class="calendar-day-label" [% IF day.data.renewal_day %]style="color:red"[% END %]>
+                                                                                                        [% day.day %]
+                                                                                                        <br>
+                                                                                                        [% IF day.data.renewal_day %]
+                                                                                                                [% ttf.tip('Cobro de membres&iacute;a', icon => 'repeat', color => 'red') %]
+                                                                                                                <br>
+                                                                                                        [% END %]
+                                                                                                        [% IF day.data.payments.is_membership_payment %]
+                                                                                                                [% ttf.tip('Pago de membres&iacute;a', icon => 'repeat', color => 'blue') %]
+                                                                                                        [% END %]
+                                                                                                </div>
+                                                                                                <div class="small calendar-day-icons">
+                                                                                                        [% IF day.data.attendance > 1 %]
+                                                                                                                [% ttf.tip(day.data.attendance _ ' visitas', icon => 'check-square', color => 'red') %]
+                                                                                                        [% ELSIF day.data.attendance == 1 %]
+                                                                                                                [% ttf.tip('Asistencia', icon => 'check', color => 'red') %]
+                                                                                                        [% END %]
+                                                                                                </div>
+                                                                                                <div class="calendar-day-data">
+                                                                                                        [% IF day.data.payments %]
+                                                                                                                <small class="text-muted text-green">
+                                                                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'resumen', ver => 'pagos', fecha => day.day _ '/' _ data.calendar.month _ '/' _ data.calendar.year, client_id => p.id ) %]" class="text-inherit">
+                                                                                                                                $[% ttf.commify(day.data.payments.total) %]
+                                                                                                                        </a>
+                                                                                                                </small>
+                                                                                                        [% END %]
+                                                                                                </div>
+                                                                                        [% END %]
+                                                                                </td>
+                                                                        [% END %]
+                                                                </tr>
+                                                        [% END %]
+                                                </tbody>
+                                        </table>
+                                </div>
+                        </div>
+                </div>
+        </div>
+</div>

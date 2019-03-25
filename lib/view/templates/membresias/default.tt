@@ -1,0 +1,147 @@
+[% INCLUDE include/header/main.tt %]
+[% INCLUDE include/configuracion/menu.tt %]
+
+<div class="col">[% INCLUDE include/membresias/upsert.tt %]</div>
+
+[% IF data.memberships.size %]
+
+<script>
+require(['jquery'], function($) {
+        $(document).ready( function() {
+                $(".MEMBERSHIP-DEFAULT-SWITCH").change( function() {
+                        var CHECKED = this.checked ? 1 : 0;
+                        var URI = "[% ttf.uri( c => 'membresias', m => 'switch-default-do' ) %]";
+                        URI += '?id=' + $(this).val();
+                        window.location.href = URI;
+                });
+
+                $("input[name=RADIO-CHART]").change( function() {
+                        if ( this.value === 'ENROLLMENTS' ) {
+                                $("#DIV-MEMBERSHIPS-INCOME-CHART").hide();
+                                $("#DIV-MEMBERSHIPS-CHART").fadeIn();
+                        }
+                        else {
+                                $("#DIV-MEMBERSHIPS-INCOME-CHART").fadeIn();
+                                $("#DIV-MEMBERSHIPS-CHART").hide();
+                        }
+                });
+
+        });
+});
+</script>
+
+<div class="col-sm-12">
+        <div class="card">
+                <div class="card-header">
+                        <h3 class="card-title">Membres&iacute;as</h3>
+                        <div class="card-options" style="padding-top:15px">
+                                <div class="selectgroup selectgroup-pills">
+                                        <label class="selectgroup-item">
+                                                <input type="radio" name="RADIO-CHART" value="ENROLLMENTS" class="selectgroup-input" checked="checked" autocomplete="off">
+                                                <span class="selectgroup-button selectgroup-button-icon">
+                                                        [% ttf.tip('Inscripciones', icon => 'users') %]
+                                                </span>
+                                        </label>
+                                        <label class="selectgroup-item">
+                                                <input type="radio" name="RADIO-CHART" value="INCOME" class="selectgroup-input" autocomplete="off">
+                                                <span class="selectgroup-button selectgroup-button-icon">
+                                                        [% ttf.tip('Ingresos', icon => 'dollar-sign') %]
+                                                </span>
+                                        </label>
+                                </div>
+                        </div>
+                </div>
+                <div class="card-body">
+                        <div id="DIV-MEMBERSHIPS-CHART" style="height:13rem;max-height:13rem;position:relative;" class="c3"></div>
+                        [% data.charts.enrollments %]
+                        <div id="DIV-MEMBERSHIPS-INCOME-CHART" style="display:none;height:13rem;max-height:13rem;position:relative;" class="c3"></div>
+                        [% data.charts.income %]
+                </div>
+        </div>
+</div>
+
+<div class="col-sm-12">
+        <div class="card">
+                <div class="card-status bg-yellow"></div>
+                <div class="card-header">
+                        <h3 class="card-title">Membres&iacute;as</h3>
+                </div>
+
+                <div class="table-responsive">
+                        <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                <thead>
+                                        <tr>
+                                                <th class="w-1"></th>
+                                                <th class="text-center w-1">Principal</th>
+                                                <th>Nombre</th>
+                                                <th>Precio</th>
+                                                <th>Ingresos</th>
+                                                <th>Tipo</th>
+                                                <th>Porcentaje</th>
+                                                <th class="text-right">Inscripciones</th>
+                                        </tr>
+                                </thead>
+                                <tbody>
+                                        [% SET TOTAL_ENROLLMENTS = 0 %]
+                                        [% FOREACH mm = data.memberships %]
+                                                <tr [% IF mm.is_default %]class="table-warning"[% END %]>
+                                                        <td class="w-1">[% loop.count %].</td>
+                                                        <td class="w-1">
+                                                                [% IF mm.active %]
+                                                                        <label class="custom-switch m-0">
+                                                                                <input type="checkbox" value="[% mm.id %]" class="custom-switch-input MEMBERSHIP-DEFAULT-SWITCH" [% IF mm.is_default %]checked="" disabled="disabled"[% END %]>
+                                                                                <span class="custom-switch-indicator"></span>
+                                                                        </label>
+                                                                [% END %]
+                                                        </td>
+                                                        <td [% IF !mm.active %]style="text-decoration:line-through" class="text-muted"[% END %]>
+                                                                <a href="[% ttf.uri( c => 'membresias', m => 'ver', id => mm.id ) %]" class="text-inherit">
+                                                                        [% mm.name %]
+                                                                        [% IF mm.is_default %]<b>( Principal )</b>[% END %]
+                                                                </a>
+                                                        </td>
+                                                        <td>$[% ttf.commify(mm.amount || 0) %]</td>
+                                                        <td>$[% ttf.commify(mm.income || 0) %]</td>
+                                                        <td>
+                                                                [% mm.display_type %]
+                                                                [% IF mm.type_code == 'G' %]
+                                                                        <div class="small text-muted">
+                                                                                [% mm.display_group_requirements %]
+                                                                        </div>
+                                                                [% END %]
+                                                        </td>
+                                                        <td class="text-center">
+                                                                <div class="mx-auto chart-circle chart-circle-xs" data-value="[% mm.percentage / 100 %]" data-thickness="3" data-color="orange"><canvas width="40" height="40"></canvas>
+                                                                        <div class="chart-circle-value">[% mm.percentage || 0 %]%</div>
+                                                                </div>
+                                                        </td>
+                                                        <td align="right">
+                                                                [% TOTAL_ENROLLMENTS = TOTAL_ENROLLMENTS + mm.enrollments %]
+                                                                [% mm.enrollments || 0 %]
+                                                                [% IF mm.type_code == 'G' && mm.dependents %]
+                                                                        [% TOTAL_ENROLLMENTS = TOTAL_ENROLLMENTS + mm.dependents %]
+                                                                        <br>
+                                                                        <small class="text-muted">
+                                                                                [% mm.dependents || 0 %]
+                                                                                [% ttf.plural(mm.dependents, 'Dependiente', 'Dependientes') %]
+                                                                        </small>
+                                                                [% END %]
+                                                        </td>
+                                                </tr>
+                                        [% END %]
+                                </tbody>
+                                <tfoot class="table-warning h5">
+                                        <tr>
+                                                <td colspan="6">&nbsp;</td>
+                                                <td>&nbsp;</td>
+                                                <td align="right">[% TOTAL_ENROLLMENTS || 0 %]</td>
+                                        </tr>
+                                </tfoot>
+                        </table>
+                </div>
+        </div>
+</div>
+
+[% END %]
+
+[% INCLUDE include/footer.tt %]

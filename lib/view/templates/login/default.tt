@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es" dir="ltr">
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <meta http-equiv="Content-Language" content="en" />
+        <meta name="msapplication-TileColor" content="#2d89ef">
+        <meta name="theme-color" content="#4188c9">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="HandheldFriendly" content="True">
+        <meta name="MobileOptimized" content="320">
+        [% IF cfg.HAS_SMALL_LOGO %]
+                <link rel="icon" href="[% ttf.s3( id => 'conf/SMALL-LOGO', open_access_policy => 1 ) %]" type="image/x-icon"/>
+                <link rel="shortcut icon" type="image/x-icon" href="[% ttf.s3( id => 'conf/SMALL-LOGO', open_access_policy => 1 ) %]" />
+        [% END %]
+        <title>admin.fit : [% cfg.CUSTOMER | upper %]</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300i,400,400i,500,500i,600,600i,700,700i&amp;subset=latin-ext">
+        <script src="/share/app/assets/js/require.min.js"></script>
+        <script>requirejs.config({ baseUrl: '/share/app/' });</script>
+        <link href="/share/app/assets/css/dashboard.css" rel="stylesheet" />
+        <script src="/share/app/assets/js/dashboard.js"></script>
+        <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+</head>
+
+<body class="">
+        <div class="page">
+                <div class="page-single">
+                        <div class="container">
+                                <div class="row">
+                                        <div class="col col-login mx-auto">
+                                                <div class="text-center mb-6">
+                                                        [% IF cfg.HAS_MAIN_LOGO %]
+                                                                <img src="[% ttf.s3( id => 'conf/400PX/MAIN-LOGO', open_access_policy => 1 ) %]">
+                                                        [% END %]
+                                                </div>
+                                                <form class="card" name="default" action="[% ttf.uri( c => 'login', m => 'login-do' ) %]" method="post">
+                                                        <div class="card-alert alert mb-0" id="FORM-STATUS-default" style="display:none"></div>
+                                                        [% INCLUDE 'include/status-messages.tt' %]
+                                                        <div class="card-body p-6">
+
+                                                                <div class="card-title">Inicio de sesi&oacute;n</div>
+                                                                <div class="form-group">
+                                                                        <label class="form-label">Nombre de usuario</label>
+                                                                        <input type="text" name="username" class="form-control" placeholder="Nombre de usuario">
+                                                                </div>
+                                                                <div class="form-group">
+                                                                        <label class="form-label">
+                                                                                Contrase&ntilde;a
+                                                                        </label>
+                                                                        <input type="password" name="password" class="form-control" placeholder="Contrase&ntilde;a">
+                                                                </div>
+                                                                <div class="form-group">
+                                                                        <label class="custom-control custom-checkbox">
+                                                                                <input type="checkbox" name="BOOL-remember_me" class="custom-control-input" />
+                                                                                <span class="custom-control-label">Recordar mi sesi&oacute;n</span>
+                                                                        </label>
+                                                                </div>
+                                                                <div class="form-footer">
+                                                                        <button type="submit" class="btn btn-primary btn-block">
+                                                                                <i class="fe fe-log-in"></i>
+                                                                                Iniciar sesi&oacute;n
+                                                                        </button>
+                                                                        <br>
+                                                                        <a href="[% ttf.uri( c => 'login', m => 'recuperar' ) %]" class="float-right small">Olvide mi contrase&ntilde;a</a>
+                                                                </div>
+                                                        </div>
+                                                </form>
+                                                [% v.pre %]
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+        </div>
+
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!-- BEGIN INCLUDE/STATUS-MESSAGES -->
+[% FOREACH ss = status %]
+        [% SWITCH ss.code %]
+        [% CASE 0 %]
+                [% CLASS_NAME = 'alert-danger' %]
+                [% ICON = 'fe-alert-triangle' %]
+        [% CASE 1 %]
+                [% CLASS_NAME = 'alert-success' %]
+                [% ICON = 'fe-check' %]
+        [% CASE 2 %]
+                [% CLASS_NAME = 'alert-info' %]
+                [% ICON = 'fe-bell' %]
+        [% CASE 3 %]
+                [% CLASS_NAME = 'alert-secondary' %]
+                [% ICON = 'fe-bell' %]
+        [% END %]
+        <div class="alert alert-dismissible [% CLASS_NAME %]" role="alert">
+                <i class="fe [% ICON %] mr-2" aria-hidden="true"></i>
+                <button type="button" class="close" data-dismiss="alert"></button>
+                [% ss.message %]
+        </div>
+[% END %]
+<div style="display:none" id="STATUS-MESSAGE" class="alert" role="alert"></div>
+
+<!-- END INCLUDE/STATUS-MESSAGES -->

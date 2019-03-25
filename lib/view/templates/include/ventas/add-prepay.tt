@@ -1,0 +1,41 @@
+<div class="card-status bg-purple"></div>
+<div class="card-header">
+        <h3 class="card-title">Agregar prepago</h3>
+        <div class="card-options">
+                <a href="javascript:;" id="A-CLOSE-ADD-PREPAY"><i class="fe fe-x"></i></a>
+        </div>
+</div>
+<div class="card-alert alert mb-0" id="FORM-STATUS-ADD_PREPAY" style="display:none"></div>
+<div class="card-body">
+        <div class="row">
+                <div class="col-sm-5">
+                        <div class="form-group">
+                                <label class="form-label">Cantidad</label>
+                                <div class="input-group">
+                                        <span class="input-group-prepend">
+                                                <span class="input-group-text">$</span>
+                                        </span>
+                                        <input type="text" name="amount" class="form-control text-right" data-mask="000,000,000.00" data-mask-reverse="true"
+
+maxlength="8" placeholder="$100.00">
+                                </div>
+                        </div>
+                </div>
+                <div class="col-sm-7">
+                        <div class="form-group">
+                                <label class="form-label">Notas</label>
+                                <div class="input-group">
+                                        <textarea name="notes" rows="3" class="form-control" placeholder="Notas"></textarea>
+                                </div>
+                        </div>
+                </div>
+        </div>
+</div>
+<div class="card-footer text-right">
+        <div class="d-flex">
+                <button type="submit" class="btn btn-primary ml-auto btn-purple">
+                        <i class="fe fe-plus"></i>
+                        Agregar a la lista de pagos por confirmar
+                </button>
+        </div>
+</div>

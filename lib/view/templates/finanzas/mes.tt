@@ -1,0 +1,523 @@
+[% INCLUDE include/header/main.tt %]
+
+<script>
+require(['jquery'], function($) {
+        $(document).ready( function() {
+                $("input[name=RADIO-CHART]").change( function() {
+                        if ( this.value === 'CONCEPTS' ) {
+                                $("#DIV-PIE-METHODS").hide();
+                                $("#DIV-PIE-CONCEPTS").fadeIn();
+                        }
+                        else {
+                                $("#DIV-PIE-METHODS").fadeIn();
+                                $("#DIV-PIE-CONCEPTS").hide();
+                        }
+                });
+        });
+});
+</script>
+
+[% IF data.charts.attendance %]
+        <div class="col-sm-12">
+                <div class="card">
+                        <div class="card-status bg-red"></div>
+                        <div class="card-header">Asistencia</div>
+                        <div id="DIV-DAILY-ATTENDANCE-CHART" style="height:8rem;max-height:120px;position:relative;" class="c3"></div>
+                        [% data.charts.attendance %]
+                </div>
+        </div>
+[% END %]
+
+[% IF data.charts.enrollments %]
+        <div class="col-sm-12">
+                <div class="card">
+                        <div class="card-status bg-gray"></div>
+                        <div class="card-header">Inscripciones, renovaciones y bajas</div>
+                        <div id="DIV-DAILY-ENROLLMENTS-CHART" style="height:8rem;max-height:120px;position:relative;" class="c3"></div>
+                        [% data.charts.enrollments %]
+                </div>
+        </div>
+[% END %]
+
+[% IF data.charts.payments %]
+        <div class="col-sm-12">
+                <div class="card">
+                        <div class="card-status bg-green"></div>
+                        <div class="card-header">Ingresos</div>
+                        <div id="DIV-DAILY-PAYMENTS-CHART" style="height:8rem;max-height:120px;position:relative;" class="c3"></div>
+                        [% data.charts.payments %]
+                </div>
+        </div>
+[% END %]
+
+[% IF data.charts.concepts %]
+        <div class="col-sm-6">
+                <div class="card">
+                        <div class="card-status bg-blue"></div>
+                        <div class="card-header">
+                                <h3 class="card-title">Ingresos por concepto</h3>
+                        </div>
+                        <div id="DIV-PIE-CONCEPTS" class="card-body">
+                             <div id="DIV-CONCEPTS-CHART" style="height:14rem;max-height:14rem;position:relative;" class="c3"></div>
+                             [% data.charts.concepts %]
+                        </div>
+                </div>
+        </div>
+        <div class="col-sm-6">
+                <div class="card">
+                        <div class="card-status bg-cyan"></div>
+                        <div class="card-header">
+                                <h3 class="card-title">Ingresos por metodo</h3>
+                        </div>
+                        <div id="DIV-PIE-METHODS" class="card-body">
+                                <div id="DIV-METHODS-CHART" style="height:14rem;max-height:14rem;position:relative;" class="c3"></div>
+                                [% data.charts.methods %]
+                        </div>
+                </div>
+        </div>
+[% END %]
+
+<div class="col-sm-3">
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-blue mr-3">
+                                <i class="fe fe-user-plus"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">[% data.calendar.totals.enrollments || 0 %]</h4>
+                                <small class="d-block text-muted">
+                                        [% ttf.plural(data.calendar.totals.enrollments, 'Incripci&oacute;n', 'Inscripciones') %]
+                                </small>
+                        </div>
+                </div>
+        </div>
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-dark mr-3">
+                                <i class="fe fe-user-x"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">[% data.calendar.totals.dropouts || 0 %]</h4>
+                                <small class="d-block text-muted">
+                                        [% ttf.plural(data.calendar.totals.dropouts, 'Baja', 'Bajas') %]
+                                </small>
+                        </div>
+                </div>
+        </div>
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-secondary mr-3">
+                                <i class="fe fe-repeat"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">[% data.calendar.totals.rememberships || 0 %]</h4>
+                                <small class="d-block text-muted">
+                                        [% ttf.plural(data.calendar.totals.rememberships, 'Renovaci&oacute;n', 'Renovaciones') %]
+                                </small>
+                        </div>
+                </div>
+        </div>
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-red-light mr-3">
+                                <i class="fe fe-flag"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">[% data.pending_renewal_clients.size || 0 %]</h4>
+                                <small class="d-block text-muted">
+                                        [% ttf.plural(data.pending_renewal_clients.size, 'Renovaci&oacute;n pendiente', 'Renovaciones pendientes') %]
+                                </small>
+                        </div>
+                </div>
+        </div>
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-red mr-3">
+                                <i class="fe fe-check"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">
+                                        [% data.calendar.totals.attendance %]
+                                 </h4>
+                                <small class="d-block text-muted">
+                                        [% ttf.plural(data.calendar.totals.attendance, 'Asistencia', 'Asistencias') %]
+                                </small>
+                        </div>
+                </div>
+        </div>
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-green mr-3">
+                                <i class="fe fe-dollar-sign"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">$[% ttf.commify(data.calendar.totals.payments) %]</h4>
+                                <small class="d-block text-muted">Ingresos del mes</small>
+                        </div>
+                </div>
+        </div>
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-cyan mr-3">
+                                <i class="fe fe-star"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">$[% ttf.commify(data.pending_membership_amount || 0) %]</h4>
+                                <small class="d-block text-muted">Membresias pendientes</small>
+                        </div>
+                </div>
+        </div>
+</div>
+
+<style>.tooltip-inner{min-width:300px;width:300px;}</style>
+
+<div class="col-sm-9">
+        <div class="card">
+                <div class="card-status bg-blue"></div>
+                <div class="card-header">
+                        <h3 class="card-title">[% data.calendar.display_month %] &raquo; [% data.calendar.year %]</h3>
+                        <div class="card-options">
+                                <a href="[% ttf.uri( c => 'finanzas', m => 'mes', month => data.prev_next.prev.month, year => data.prev_next.prev.year) %]" class="btn btn-secondary btn-sm">
+                                        [% ttf.tip(data.prev_next.prev.display_month, icon => 'arrow-left', color => 'gray') %]
+                                </a>
+                                &nbsp;
+                                <a href="[% ttf.uri( c => 'finanzas', m => 'mes', month => data.prev_next.next.month, year => data.prev_next.next.year) %]" class="btn btn-secondary btn-sm">
+                                        [% ttf.tip(data.prev_next.next.display_month, icon => 'arrow-right', color => 'gray') %]
+                                </a>
+                        </div>
+                </div>
+                <div class="card-body">
+                        <div class="table-responsive push">
+                                <table class="table table-bordered">
+                                        <thead>
+                                                <tr>
+                                                        <th width="14%" style="border-top:solid 1px #dee2e6">Dom</th>
+                                                        <th width="14%" style="border-top:solid 1px #dee2e6">Lun</th>
+                                                        <th width="14%" style="border-top:solid 1px #dee2e6">Mar</th>
+                                                        <th width="14%" style="border-top:solid 1px #dee2e6">Mie</th>
+                                                        <th width="14%" style="border-top:solid 1px #dee2e6">Jue</th>
+                                                        <th width="14%" style="border-top:solid 1px #dee2e6">Vie</th>
+                                                        <th width="14%" style="border-top:solid 1px #dee2e6">Sab</th>
+                                                </tr>
+                                        </thead>
+                                        <tbody>
+                                                [% FOREACH week = data.calendar.weeks %]
+                                                        <tr>
+                                                                [% FOREACH day = week %]
+                                                                        <td width="14%" class="table-calendar-day">
+                                                                                [% IF day.day %]
+                                                                                        <div class="calendar-day-label">
+                                                                                                [% day.day %]
+                                                                                        </div>
+                                                                                        <div class="calendar-day-data">
+                                                                                                [% IF day.data.enrollments %]
+                                                                                                        <a href="[% ttf.uri( c => 'membresias', m => 'resumen', fecha => day.day _ '/' _ data.calendar.month _ '/' _ data.calendar.year ) %]" class="text-inherit no-underline">
+                                                                                                                <span class="ml-auto badge badge-primary" [% ttf.tip(day.data.enrollment_display_string, no_icon => 1, dont_escape => 1 ) %]>
+                                                                                                                        [% day.data.enrollments %]
+                                                                                                                </span>
+                                                                                                        </a>
+                                                                                                [% END %]
+                                                                                                [% IF day.data.dropouts %]
+                                                                                                        <a href="[% ttf.uri( c => 'usuarios', m => 'inactivos', fecha => day.day _ '/' _ data.calendar.month _ '/' _ data.calendar.year ) %]" class="text-inherit no-underline">
+                                                                                                                <span class="ml-auto badge badge-dark" [% ttf.tip(day.data.dropout_display_string, no_icon => 1, dont_escape => 1 ) %]>
+                                                                                                                        [% day.data.dropouts %]
+                                                                                                                </span>
+                                                                                                        </a>
+                                                                                                [% END %]
+                                                                                                [% IF day.data.rememberships %]
+                                                                                                        <a href="[% ttf.uri( c => 'membresias', m => 'resumen', fecha => day.day _ '/' _ data.calendar.month _ '/' _ data.calendar.year ) %]" class="text-inherit no-underline">
+                                                                                                                <span class="ml-auto badge badge-secondary" [% ttf.tip(day.data.remembership_display_string, no_icon => 1, dont_escape => 1 ) %]>
+                                                                                                                        [% day.data.rememberships %]
+                                                                                                                </span>
+                                                                                                        </a>
+
+                                                                                                [% END %]
+                                                                                                [% IF day.data.attendance %]
+                                                                                                        <a href="[% ttf.uri( c => 'asistencia', m => 'resumen', fecha => day.day _ '/' _ data.calendar.month _ '/' _ data.calendar.year ) %]" class="text-inherit no-underline">
+                                                                                                                <span class="ml-auto badge badge-danger">[% day.data.attendance %]</span>
+                                                                                                        </a>
+                                                                                                [% END %]
+                                                                                                <span class="d-block text-green">
+                                                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'resumen', ver => 'pagos', fecha => day.day _ '/' _ data.calendar.month _ '/' _ data.calendar.year) %]" class="text-inherit">
+                                                                                                                $[% ttf.commify(day.data.payments || 0) %]
+                                                                                                        </a>
+                                                                                                </span>
+                                                                                        </div>
+                                                                                [% END %]
+                                                                        </td>
+                                                                [% END %]
+                                                        </tr>
+                                                [% END %]
+                                        </tbody>
+                                </table>
+                        </div>
+                </div>
+        </div>
+</div>
+
+[% IF data.pending_renewal_clients %]
+
+<a id="RENOVACIONES-PENDIENTES"></a>
+<div class="col-sm-12">
+        <div class="card">
+                <div class="card-status bg-red"></div>
+                <div class="card-header">
+                        <h3 class="card-title">Renovaciones pendientes</h3>
+                </div>
+                <div class="table-responsive">
+                        <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                <thead>
+                                        <tr>
+                                                <th class="w-1"></th>
+                                                <th class="w-1"></th>
+                                                <th>Nombre</th>
+                                                <th>&nbsp;</th>
+                                                <th class="text-right">Cantidad</th>
+                                        </tr>
+                                </thead>
+                                <tbody>
+                                        [% FOREACH cc = data.pending_renewal_clients %]
+                                                <tr>
+                                                        <td class="w-1">[% loop.count %].</td>
+                                                        <td class="w-1">
+                                                                [% ttf.avatar(
+                                                                        id => cc.id,
+                                                                        has_profile_picture => cc.has_profile_picture,
+                                                                        has_picture => cc.has_picture,
+                                                                        name => cc.display_name ) %]
+                                                        </td>
+                                                        <td>
+                                                                <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => cc.id ) %]" class="[% IF !cc.active %]text-muted amount-paid[% ELSE %]text-inherit[% END %]">
+                                                                        [% cc.display_name %]
+                                                                </a>
+                                                                <small class="d-block text-muted">
+                                                                        Inscripci&oacute;n : [% cc.create_date %]
+                                                                </small>
+                                                                [% UNLESS cc.active %]
+                                                                        <span class="ml-auto badge badge-secondary">Usuario deshabilitado</span>
+                                                                [% END %]
+                                                        </td>
+                                                        <td style="position:relative" width="30%">
+                                                                <div style="position:absolute;bottom:0;right:15px;width:98%;margin-bottom:1rem;margin-right:10px">
+                                                                        <a href="[% ttf.uri( c => 'membresias', m => 'ver', id => cc.membership.membership_id ) %]" class="text-inherit">
+                                                                                [% cc.membership.name %]
+                                                                        </a>
+                                                                        <div class="clearfix">
+                                                                                <div class="float-left small">
+                                                                                        [% cc.debt.membership.display_days %]
+                                                                                </div>
+                                                                                <div class="float-right small">
+                                                                                        <small class="text-muted">[% cc.debt.membership.display_next %]</small>
+                                                                                </div>
+                                                                        </div>
+                                                                        <div class="progress progress-xs">
+                                                                                <div class="progress-bar [% cc.debt.membership.progress_color_class %]"
+                                                                                        role="progressbar"
+                                                                                        style="background:red;width:[% cc.debt.membership.progress_pct %]%"
+                                                                                        aria-valuenow="[% IF cc.debt.membership.expired %]0[% ELSE %]cc.debt.membership.days %][% END %]"
+                                                                                        aria-valuemin="0"
+                                                                                        aria-valuemax="[% cc.debt.membership.progress_max_days %]">
+                                                                                </div>
+                                                                        </div>
+                                                                </div>
+
+                                                        </td>
+                                                        <td align="right">
+                                                                $[% ttf.commify(cc.membership.amount) %]
+                                                        </td>
+                                                </tr>
+                                        [% END %]
+                                </tbody>
+                                <tfoot class="table-danger h5">
+                                        <tr>
+                                                <td colspan="4"></td>
+                                                <td align="right">$[% ttf.commify(data.pending_membership_amount || 0) %]</td>
+                                        </tr>
+                                </tfoot>
+                        </table>
+                </div>
+        </div>
+</div>
+
+[% END %]
+
+[% IF data.calendar.enrollments.size || data.calendar.dropouts.size %]
+
+<div class="col">
+
+        [% IF data.calendar.enrollments.size %]
+
+                <a id="INSCRIPCIONES"></a>
+                <div class="card">
+                        <div class="card-status bg-blue"></div>
+                        <div class="card-header">
+                                <h3 class="card-title">Inscripciones nuevas</h3>
+                        </div>
+                        <div class="table-responsive">
+                                <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                        <thead>
+                                                <tr>
+                                                        <th class="w-1"></th>
+                                                        <th class="w-1"></th>
+                                                        <th>Nombre</th>
+                                                        <th class="text-right">Cantidad</th>
+                                                </tr>
+                                        </thead>
+                                        [% SET TOTAL_NEW_ENROLLMENT_AMOUNT = 0 %]
+                                        <tbody>
+                                                [% FOREACH cc = data.calendar.enrollments %]
+                                                        <tr>
+                                                                <td class="w-1">[% loop.count %].</td>
+                                                                <td class="w-1">
+                                                                        [% ttf.avatar(
+                                                                                id => cc.id,
+                                                                                has_profile_picture => cc.has_profile_picture,
+                                                                                has_picture => cc.has_picture,
+                                                                                name => cc.name ) %]
+                                                                </td>
+                                                                <td>
+                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => cc.id ) %]" class="[% IF !cc.active %]amount-paid text-muted[% ELSE %]text-inherit[% END %]">
+                                                                                [% cc.name %]
+                                                                        </a>
+                                                                        <small class="d-block text-muted">[% cc.create_date %]</small>
+                                                                </td>
+                                                                <td align="right">
+                                                                        $[% ttf.commify(cc.membership_amount) %]
+                                                                        [% TOTAL_NEW_ENROLLMENT_AMOUNT = TOTAL_NEW_ENROLLMENT_AMOUNT + cc.membership_amount %]
+                                                                        <small class="d-block text-muted">
+                                                                                <a href="[% ttf.uri( c => 'membresias', m => 'ver', id => cc.membership_id ) %]" class="text-inherit">
+                                                                                        [% cc.membership_name %]
+                                                                                </a>
+                                                                        </small>
+                                                                </td>
+                                                        </tr>
+                                                [% END %]
+                                        </tbody>
+                                        <tfoot class="table-primary h5">
+                                                <tr>
+                                                        <td colspan="3"></td>
+                                                        <td align="right">$[% ttf.commify(TOTAL_NEW_ENROLLMENT_AMOUNT || 0) %]</td>
+                                                </tr>
+                                        </tfoot>
+                                </table>
+                        </div>
+                </div>
+
+        [% END %]
+
+        [% IF data.calendar.dropouts.size %]
+
+                <div class="card">
+                        <div class="card-status bg-dark"></div>
+                        <div class="card-header">
+                                <h3 class="card-title">Bajas</h3>
+                        </div>
+                        <div class="table-responsive">
+                                <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                        <thead>
+                                                <tr>
+                                                        <th class="w-1"></th>
+                                                        <th class="w-1"></th>
+                                                        <th>Nombre</th>
+                                                </tr>
+                                        </thead>
+                                        <tbody>
+                                                [% FOREACH cc = data.calendar.dropouts %]
+                                                        <tr>
+                                                                <td class="w-1">[% loop.count %].</td>
+                                                                <td class="w-1">
+                                                                        [% ttf.avatar(
+                                                                                id => cc.id,
+                                                                                has_profile_picture => cc.has_profile_picture,
+                                                                                has_picture => cc.has_picture,
+                                                                                name => cc.name ) %]
+                                                                </td>
+                                                                <td>
+                                                                        [% IF cc.is_deleted_user %]
+                                                                                [% cc.name %]
+                                                                                <br>
+                                                                                <span class="ml-auto badge badge-dark">Usuario eliminado</span>
+                                                                        [% ELSE %]
+                                                                                <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => cc.id ) %]" class="text-inherit">
+                                                                                        [% cc.name %]
+                                                                                </a>
+                                                                        [% END %]
+
+                                                                        <small class="d-block text-muted">[% cc.deactivation_date %]</small>
+                                                                </td>
+                                                        </tr>
+                                                [% END %]
+                                        </tbody>
+                                </table>
+                        </div>
+                </div>
+
+        [% END %]
+
+</div>
+
+[% END %]
+
+[% IF data.calendar.rememberships.size %]
+
+<a id="PAGADAS"></a>
+<div class="col">
+        <div class="card">
+                <div class="card-status bg-gray"></div>
+                <div class="card-header">
+                        <h3 class="card-title">Renovaciones de membres&iacute;a</h3>
+                </div>
+                <div class="table-responsive">
+                        <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                <thead>
+                                        <tr>
+                                                <th class="w-1"></th>
+                                                <th class="w-1"></th>
+                                                <th>Nombre</th>
+                                                <th class="text-right">Cantidad</th>
+                                        </tr>
+                                </thead>
+                                <tbody>
+                                        [% SET TOTAL_REMEMBERSHIPS_AMOUNT = 0 %]
+                                        [% FOREACH cc = data.calendar.rememberships %]
+                                                <tr>
+                                                        <td class="w-1">[% loop.count %].</td>
+                                                        <td class="w-1">
+                                                                [% ttf.avatar(
+                                                                        id => cc.id,
+                                                                        has_profile_picture => cc.has_profile_picture,
+                                                                        has_picture => cc.has_picture,
+                                                                        name => cc.name ) %]
+                                                        </td>
+                                                        <td>
+                                                                <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => cc.id ) %]" class="[% IF !cc.active %]amount-paid text-muted[% ELSE %]text-inherit[% END %]">
+                                                                        [% cc.name %]
+                                                                </a>
+                                                                <small class="d-block text-muted">[% cc.create_date %]</small>
+                                                        </td>
+                                                        <td align="right">
+                                                                $[% ttf.commify(cc.membership_amount) %]
+                                                                <small class="d-block text-muted">
+                                                                        <a href="[% ttf.uri( c => 'membresias', m => 'ver', id => cc.membership_id ) %]" class="text-inherit">
+                                                                                [% cc.membership_name %]
+                                                                        </a>
+                                                                </small>
+                                                        </td>
+                                                        [% TOTAL_REMEMBERSHIPS_AMOUNT = TOTAL_REMEMBERSHIPS_AMOUNT + cc.membership_amount %]
+                                                </tr>
+                                        [% END %]
+                                </tbody>
+                                <tfoot class="table-secondary h5">
+                                        <tr>
+                                                <td colspan="3"></td>
+                                                <td align="right">$[% ttf.commify(TOTAL_REMEMBERSHIPS_AMOUNT || 0) %]</td>
+                                        </tr>
+                                </tfoot>
+                        </table>
+                </div>
+        </div>
+</div>
+
+[% END %]
+
+[% INCLUDE include/footer.tt %]

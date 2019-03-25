@@ -1,0 +1,32 @@
+<script>
+function _update_payment_totals(TOTAL) {
+        $("#DIV-SHOPPING-CART-TOTAL").html( "$" + __ADMINFIT__.commify(TOTAL.toFixed(2) ) );
+}
+</script>
+
+<fieldset class="form-fieldset col-sm-12">
+        <div style="font-weight:bold;font-size:28px;margin-right:5px;margin-bottom:8px" id="DIV-SHOPPING-CART-TOTAL"></div>
+        <form name="default" action="[% ttf.uri( c => 'ventas', m => 'process-payments-do' ) %]" method="post">
+                <input type="hidden" name="client_id" value="[% p.id %]">
+                <input type="hidden" id="JSON-CART-ITEMS" name="JSON_cart_items" value="">
+                <div class="row">
+                        <div class="form-group col-sm-8">
+                                <select name="method_type_code" class="custom-select">
+                                        <option value="CASH" selected="selected">Efectivo</option>
+                                        <option value="CARD">Cr&eacute;dito / D&eacute;bito</option>
+                                        <option value="TRANSFER">Transferencia</option>
+                                </select>
+                                <div style="margin-top:10px">
+                                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                                        <small class="d-block">Notas</small>
+                                </div>
+                        </div>
+                        <div class="form-group col-sm-4">
+                                <a href="javascript:;" id="BTN-PAY-NOW" style="height:37px" class="w-100 btn btn-primary">
+                                        <i class="fe fe-check"></i>
+                                        Confirmar pago
+                                </a>
+                        </div>
+                </div>
+        </form>
+</fieldset>

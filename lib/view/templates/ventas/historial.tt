@@ -1,0 +1,144 @@
+[% INCLUDE include/header/main.tt %]
+
+<div class="col-sm-3">
+        <div class="page-header" style="margin-top:0px !important">
+                <div class="h1 page-title" style="width:100%;text-align:right">
+                        Historial de inventario
+                        <br>
+                        [% IF p.start_date && p.end_date %]
+                                [% p.start_date %] &raquo; [% p.end_date %]
+                        [% ELSIF p.fecha %]
+                                [% p.fecha %]
+                        [% END %]
+                </div>
+        </div>
+        <div class="p-0" style="margin-bottom:34px">
+                <div class="form-label text-right">B&uacute;squeda entre fechas&nbsp;&nbsp;</div>
+                <form action="[% ttf.uri( c => 'ventas', m => 'historial' ) %]" method="get">
+                        <input type="hidden" name="id" value="[% p.id %]">
+                        <input type="hidden" name="start_date" value="">
+                        <input type="hidden" name="end_date" value="">
+                        <div class="input-group">
+                                <input id="daterange" class="form-control text-right">
+                                <span class="input-group-append">
+                                        <span class="input-group-text"><i class="fe fe-calendar"></i></span>
+                                </span>
+                        </div>
+                </form>
+        </div>
+</div>
+
+<div class="col-sm-9">
+
+        <div class="row">
+                <div class="col-sm-4">
+                        <div class="card p-3">
+                                <div class="d-flex align-items-center">
+                                        <span class="stamp stamp-md bg-green mr-3">
+                                                <i class="fe fe-dollar-sign"></i>
+                                        </span>
+                                        <div>
+                                                <h4 class="m-0">$[% ttf.commify(data.totals.sales_amount || 0) %]</h4>
+                                                <small class="d-block text-muted">
+                                                        [% ttf.plural(data.totals.sales_amount, 'Ingreso', 'Ingresos') %]
+                                                </small>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+                <div class="col-sm-4">
+                        <div class="card p-3">
+                                <div class="d-flex align-items-center">
+                                        <span class="stamp stamp-md bg-red mr-3">
+                                                <i class="fe fe-arrow-down-circle"></i>
+                                        </span>
+                                        <div>
+                                                <h4 class="m-0">$[% ttf.commify(data.totals.discount_amount || 0) %]</h4>
+                                                <small class="d-block text-muted">
+                                                        [% ttf.plural(data.totals.discount_amount, 'Descuento', 'Descuentos') %]
+                                                </small>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+                <div class="col-sm-4">
+                        <div class="card p-3">
+                                <div class="d-flex align-items-center">
+                                        <span class="stamp stamp-md bg-teal mr-3">
+                                                <i class="fe fe-shopping-cart"></i>
+                                        </span>
+                                        <div>
+                                                <h4 class="m-0">[% data.totals.sales_count || 0 %]</h4>
+                                                <small class="d-block text-muted">
+                                                        [% ttf.plural(data.totals.sales_count, 'Venta', 'Ventas') %]
+                                                </small>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+        </div>
+
+
+        <div class="row">
+                <div class="col-sm-4">
+                        <div class="card p-3">
+                                <div class="d-flex align-items-center">
+                                        <span class="stamp stamp-md bg-orange mr-3">
+                                                <i class="fe fe-plus"></i>
+                                        </span>
+                                        <div>
+                                                <h4 class="m-0">[% data.totals.in || 0 %]</h4>
+                                                <small class="d-block text-muted">
+                                                        [% ttf.plural(data.totals.in, 'Entrada de inventario', 'Entradas de inventario') %]
+                                                </small>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+
+                <div class="col-sm-4">
+                        <div class="card p-3">
+                                <div class="d-flex align-items-center">
+                                        <span class="stamp stamp-md bg-gray mr-3">
+                                                <i class="fe fe-minus"></i>
+                                        </span>
+                                        <div>
+                                                <h4 class="m-0">[% data.totals.out || 0 %]</h4>
+                                                <small class="d-block text-muted">
+                                                        [% ttf.plural(data.totals.out, 'Extracci&oacute;n de inventario', 'Extracci&oacute;nes de inventario') %]
+                                                </small>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+
+                <div class="col-sm-4">
+                        <div class="card p-3">
+                                <div class="d-flex align-items-center">
+                                        <span class="stamp stamp-md bg-purple mr-3">
+                                                <i class="fe fe-rewind"></i>
+                                        </span>
+                                        <div>
+                                                <h4 class="m-0">[% data.totals.returns || 0 %]</h4>
+                                                <small class="d-block text-muted">
+                                                        [% ttf.plural(data.totals.returns, 'Devoluci&oacute;n', 'Devoluciones') %]
+                                                </small>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+        </div>
+
+</div>
+
+[% IF data.history.size %]
+        <div class="col-sm-12">
+                <div class="row">
+                        <div class="col-sm-12">
+                                [% INCLUDE 'include/ventas/history.tt' %]
+                        </div>
+                </div>
+        </div>
+[% END %]
+
+[% INCLUDE include/footer.tt %]

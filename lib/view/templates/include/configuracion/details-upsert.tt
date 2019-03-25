@@ -1,0 +1,293 @@
+<script>
+
+require(['jquery'], function($) {
+
+        $(document).ready( function() {
+
+                $( "input[name='type_code']" ).change( function() {
+                        if ( $(this).val() === 'options' ) {
+                                $('#DIV-SPECIFIC-OPTIONS').show();
+                        }
+                        else {
+                                $('#DIV-SPECIFIC-OPTIONS').hide();
+                        }
+                });
+
+                $( "input[name='name']" ).blur( function() {
+                        var INPUT = this;
+                        $(INPUT).hide().show();
+                        var NAME = $(INPUT).val();
+                        if ( !NAME.length ) return;
+                        var URI = "[% ttf.uri( c => 'configuracion', m => 'x_check_detail_name_availability' ) %]?name=" + NAME;
+                        $.getJSON(URI, function(RESPONSE) {
+                                if ( RESPONSE.available === 1 ) {
+                                        __ADMINFIT__.display_success('Nombre de detalle adicional disponible.', INPUT);
+                                }
+                                else {
+                                        __ADMINFIT__.display_error('Nombre de detalle adicional indisponible.', INPUT);
+                                }
+                        });
+                });
+
+                $( ".USAGE-TYPES" ).change( function() {
+                        if ( this.checked ) {
+
+                                var TYPE = $(this).attr('name');
+
+                                if ( TYPE === 'BOOL-for_inventory' ) {
+                                        $('input[name=BOOL-for_staff]').removeAttr('checked');
+                                        $('input[name=BOOL-for_clients]').removeAttr('checked');
+                                        $("#DIV-INVENTORY-TYPES").fadeIn('slow');
+                                }
+                                else {
+                                        $("#DIV-INVENTORY-TYPES").hide();
+                                        $('input[name=BOOL-for_inventory]').removeAttr('checked');
+                                }
+
+                        }
+                });
+
+                $("#INPUT-SPECIFIC-OPTION").keydown( function(e) {
+                        var CODE = e.which;
+                        if( CODE === 13 ) {
+                                e.preventDefault();
+                                add_specific_option(this.value);
+                                $(this).val('');
+                        }
+                });
+
+                $(".BUTTON-ADD-SPECIFIC-OPTION").click(function() {
+                        var INPUT_TEXT = $("#INPUT-SPECIFIC-OPTION").val();
+                        add_specific_option(INPUT_TEXT);
+                        $("#INPUT-SPECIFIC-OPTION").val('');
+                });
+
+                $("#DIV-TAG-LIST").on( "click", ".A-TAG-X", function() {
+                        var TAG_ID = $(this).data('tag_id');
+                        $("#SPAN-TAG-" + TAG_ID).remove();
+                });
+
+                function add_specific_option(OPTION_TEXT) {
+
+                        if ( OPTION_TEXT.length === 0 ) return true;
+
+                        var TAG_ID = $(".TAG-SPECIFIC-OPTION").size();
+
+                        var SPAN_TAG = $('<span />')
+                                .addClass('tag item TAG-SPECIFIC-OPTION')
+                                .attr( 'id', 'SPAN-TAG-' + TAG_ID)
+                                .append(OPTION_TEXT)
+                                .append(
+                                        $('<input type=hidden />')
+                                        .attr( 'name', 'SO-' + TAG_ID)
+                                        .attr( 'value', OPTION_TEXT)
+                                )
+                                .append(
+                                        $('<a class=tag-addon />')
+                                        .data( 'tag_id', TAG_ID)
+                                        .addClass('A-TAG-X')
+                                        .append( $("<i />").addClass('fe fe-x') )
+                                );
+
+                        $("#DIV-TAG-LIST").append(SPAN_TAG);
+
+                }
+
+        });
+
+});
+
+function check_has_options() {
+        var SELECTOR = "input[name=type_code]:checked";
+        if ( $( SELECTOR ).val() !== 'options' ) return true;
+        if ( $("#DIV-TAG-LIST span.TAG-SPECIFIC-OPTION").size() > 1 ) return true;
+        return false;
+}
+
+function check_usage_types() {
+        var SELECTOR = "input.USAGE-TYPES:checked";
+        if ( !!$(SELECTOR).size() ) return true;
+        return false;
+}
+
+function check_inventory_types() {
+        if ( !$("input[name=BOOL-for_inventory]").is(":checked") ) return true;
+        if ( $("#DIV-INVENTORY-TYPES input:checkbox:checked").size() > 0 ) return true;
+        return false;
+}
+
+</script>
+
+<form class="card" name="default" action="[% ttf.uri( c => 'configuracion', m => 'detalles-adicionales-upsert-do' ) %]" method="post">
+        <div class="card-status bg-blue"></div>
+        <div class="card-header">
+                [% IF data.detail %]
+                        <input type="hidden" name="id" value="[% p.id %]">
+                        [% data.detail.name %] &raquo; Actualizar
+                [% ELSE %]
+                        Agregar detalle nuevo
+                [% END %]
+        </div>
+        <div class="card-alert alert mb-0" id="FORM-STATUS-default" style="display:none"></div>
+        <div class="card-body">
+                <div class="row">
+                        <div class="col-sm-12">
+                                <div class="form-group">
+                                        <label class="form-label">Detalle</label>
+                                        <input type="text" name="name"
+
+class="form-control" placeholder="Ejemplo : Peso, talla, comida favorita" value="[% data.detail.name %]">
+                                </div>
+                        </div>
+
+                        <div class="col-sm-12">
+                                <div class="form-group">
+                                        <label class="form-label">Tipo de detalle</label>
+                                        <div class="selectgroup w-100">
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" name="type_code" value="text" class="selectgroup-input" [% ttf.checked( !data.detail || data.detail.type_code == 'text' ) %]>
+                                                        <span class="selectgroup-button">Texto</span>
+                                                </label>
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" name="type_code" value="numeric" class="selectgroup-input" [% ttf.checked( data.detail.type_code == 'numeric' ) %]>
+                                                        <span class="selectgroup-button">N&uacute;merico</span>
+                                                </label>
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" name="type_code" value="date" class="selectgroup-input" [% ttf.checked( data.detail.type_code == 'date' ) %]>
+                                                        <span class="selectgroup-button">Fecha</span>
+                                                </label>
+                                                <label class="selectgroup-item">
+                                                        <input type="radio" name="type_code" value="options" class="selectgroup-input" [% ttf.checked( data.detail.type_code == 'options' ) %]>
+                                                        <span class="selectgroup-button">Opciones</span>
+                                                </label>
+                                        </div>
+                                </div>
+                        </div>
+                        <div class="col-sm-12" style="margin-bottom:20px;[% UNLESS data.detail.type_code == 'options' %]display:none;[% END %]" id="DIV-SPECIFIC-OPTIONS">
+                                <div class="form-group">
+                                        <div class="input-group">
+                                                <input type="text"
+
+class="form-control" id="INPUT-SPECIFIC-OPTION" placeholder="Agregar opci&oacute;n">
+                                                <span class="input-group-append">
+                                                        <button class="btn btn-secondary BUTTON-ADD-SPECIFIC-OPTION" type="button">
+                                                                <i class="fe fe-plus"></i>
+                                                        </button>
+                                                </span>
+                                        </div>
+                                </div>
+                                <div class="tags" id="DIV-TAG-LIST">
+                                        [% IF data.detail.type_code == 'options' %]
+                                                [% FOREACH oo = data.detail.options %]
+                                                        <span class="tag item TAG-SPECIFIC-OPTION" id="SPAN-TAG-[% loop.index %]">
+                                                                [% oo %]
+                                                                <input type="hidden" name="SO-[% loop.index %]" value="[% oo %]">
+                                                                <a class="tag-addon A-TAG-X" data-tag_id="[% loop.index %]">
+                                                                        <i class="fe fe-x"></i>
+                                                                </a>
+                                                        </span>
+                                                [% END %]
+                                        [% END %]
+                                </div>
+                        </div>
+                        <div class="col-sm-6">
+                                <div class="form-group">
+                                        <label class="custom-control custom-checkbox">
+                                                <input type="checkbox" class="custom-control-input" name="BOOL-required" [% ttf.checked(data.detail.required) %]>
+                                                <span class="custom-control-label">Requerido</span>
+                                        </label>
+                                        <small class="d-block item-except text-sm text-muted h-1x">
+                                                <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                                Al agregar usuarios o articulos de inventario este detalle puede ser opcional o requerido.
+                                        </small>
+                                </div>
+                        </div>
+                        <div class="col-sm-6">
+                                <div class="form-group">
+                                        <label class="form-label">
+                                                Disponibilidad
+                                                <span class="text-red" style="font-size:16px">*</span>
+                                        </label>
+                                        <div class="selectgroup selectgroup-pills">
+                                                <label class="selectgroup-item">
+                                                        <input type="checkbox" name="BOOL-for_staff" class="USAGE-TYPES selectgroup-input" [% ttf.checked(data.detail.for_staff) %]>
+                                                        <span class="selectgroup-button">Staff</span>
+                                                </label>
+                                                <label class="selectgroup-item">
+                                                        <input type="checkbox" name="BOOL-for_clients" class="USAGE-TYPES selectgroup-input" [% ttf.checked(data.detail.for_clients) %]>
+                                                        <span class="selectgroup-button">Clientes</span>
+                                                </label>
+                                                <label class="selectgroup-item">
+                                                        <input type="checkbox" name="BOOL-for_inventory" class="USAGE-TYPES selectgroup-input" [% ttf.checked(data.detail.for_inventory) %]>
+                                                        <span class="selectgroup-button">Inventario</span>
+                                                </label>
+                                        </div>
+                                        <div id="DIV-INVENTORY-TYPES" style="margin-top:10px;[% UNLESS data.detail.for_inventory %]display:none[% END %]">
+                                                <label class="form-label">
+                                                        Productos y servicios
+                                                        <span class="text-red" style="font-size:16px">*</span>
+                                                </label>
+                                                <div>
+                                                        <label class="custom-control custom-checkbox custom-control-inline">
+                                                                <input type="checkbox" class="custom-control-input" name="BOOL-INV-VISITS" [% ttf.checked(data.detail.inventory_types.${'VISITS'}) %]>
+                                                                <span class="custom-control-label">Paquete de visitas</span>
+                                                        </label>
+                                                        <label class="custom-control custom-checkbox custom-control-inline">
+                                                                <input type="checkbox" class="custom-control-input" name="BOOL-INV-FOOD" [% ttf.checked(data.detail.inventory_types.${'FOOD'}) %]>
+                                                                <span class="custom-control-label">Bebidas y alimentos</span>
+                                                        </label>
+                                                        <label class="custom-control custom-checkbox custom-control-inline">
+                                                                <input type="checkbox" class="custom-control-input" name="BOOL-INV-SUPPLEMENTS" [% ttf.checked(data.detail.inventory_types.${'SUPPLEMENTS'}) %]>
+                                                                <span class="custom-control-label">Suplementos</span>
+                                                        </label>
+                                                        <label class="custom-control custom-checkbox custom-control-inline">
+                                                                <input type="checkbox" class="custom-control-input" name="BOOL-INV-CLOTHING" [% ttf.checked(data.detail.inventory_types.${'CLOTHING'}) %]>
+                                                                <span class="custom-control-label">Ropa</span>
+                                                        </label>
+                                                        <label class="custom-control custom-checkbox custom-control-inline">
+                                                                <input type="checkbox" class="custom-control-input" name="BOOL-INV-SHOES" [% ttf.checked(data.detail.inventory_types.${'SHOES'}) %]>
+                                                                <span class="custom-control-label">Tenis</span>
+                                                        </label>
+                                                        <label class="custom-control custom-checkbox custom-control-inline">
+                                                                <input type="checkbox" class="custom-control-input" name="BOOL-INV-EQUIPMENT" [% ttf.checked(data.detail.inventory_types.${'EQUIPMENT'}) %]>
+                                                                <span class="custom-control-label">Equipo</span>
+                                                        </label>
+                                                        <label class="custom-control custom-checkbox custom-control-inline">
+                                                                <input type="checkbox" class="custom-control-input" name="BOOL-INV-SERVICES" [% ttf.checked(data.detail.inventory_types.${'SERVICES'}) %]>
+                                                                <span class="custom-control-label">Servicios</span>
+                                                        </label>
+                                                        <label class="custom-control custom-checkbox custom-control-inline">
+                                                                <input type="checkbox" class="custom-control-input" name="BOOL-INV-OTHER" [% ttf.checked(data.detail.inventory_types.${'OTHER'}) %]>
+                                                                <span class="custom-control-label">Otros</span>
+                                                        </label>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+        </div>
+        <div class="card-footer text-right">
+                <div class="d-flex">
+                        [% IF data.detail %]
+                                <label class="custom-switch">
+                                        <input type="checkbox"
+                                        data-switch_uri="[% ttf.uri( c => 'configuracion', m => 'detalles-adicionales-switch-active-do', id => p.id ) %]"
+                                        class="ACTIVE-SWITCH custom-switch-input"
+                                        [% ttf.checked(data.detail.active ) %]>
+                                        <span class="custom-switch-indicator"></span>
+                                        <span class="custom-switch-description">
+                                                [% IF data.detail.active %]
+                                                        Deshabilitar
+                                                [% ELSE %]
+                                                        Reactivar
+                                                [% END %]
+                                        </span>
+                                </label>
+                        [% END %]
+                        <button type="submit" class="btn btn-primary ml-auto">
+                                [% IF data.detail %]Guardar[% ELSE %]Agregar[% END %]
+                        </button>
+                </div>
+        </div>
+</form>
+[% v.pre %]

@@ -1,0 +1,1072 @@
+[% INCLUDE include/header/main.tt %]
+
+<script>
+require(['jquery', 'selectize'], function($, selectize) {
+
+        $(document).ready(function() {
+
+                $(".PRODUCT-TYPE-FILTER").click( function() {
+                        var TYPE_CODE = $(this).data("type_code");
+                        $("#TABLE-PRODUCTS tr").show();
+                        if ( TYPE_CODE !== "ALL" ) $("#TABLE-PRODUCTS tr").not(".TR-PRODUCT-TYPE-CODE-" + TYPE_CODE).hide();
+                });
+
+                $("#A-PRODUCTS-SHOW-ALL").click( function() {
+                        $("#TABLE-PRODUCTS tr").fadeIn();
+                        $("#TR-PRODUCTS-SHOW-ALL").remove();
+                });
+
+                $("#INPUT-CHARGE-SEARCH").keyup( function(e) {
+
+                        if (e.keyCode == 27) this.value = '';
+                        var SEARCH = this.value;
+
+                        $("div.card.card-collapsed").removeClass("card-collapsed");
+                        $("table.TABLE-CHARGES tr").show();
+                        $("div.CARD-CHARGES").show();
+
+                        $("table.TABLE-CHARGES tr td.table-search-col" ).each( function(i, TD) {
+                                if ( $(TD).text().toUpperCase().indexOf(SEARCH.toUpperCase()) <= -1 ) {
+                                        $(TD).parent("tr").hide();
+                                }
+                        });
+
+                        $("table.TABLE-CHARGES").each( function(i, TABLE) {
+                                if ( $(TABLE).find("tr:visible").size() === 0 ) {
+                                        $(TABLE).parent("div.CARD-CHARGES").hide();
+                                }
+                        });
+
+                        if ( SEARCH.length > 0 ) {
+                                $("div.CARD-CHARGES").not(":has(table.TABLE-CHARGES)").hide();
+                        }
+
+                });
+
+                $("#A-CANCEL-SEARCH").click( function() {
+                        $("#INPUT-CHARGE-SEARCH").val('').trigger("keyup");
+                });
+
+                $(".BTN-ADD-TO-CART").click( function() {
+
+                        if ( !$(this).hasClass("btn-outline-success") ) return true;
+
+                        var TYPE_CODE = $(this).data("type_code");
+                        var CHARGE_ID = $(this).data("charge_id");
+
+                        var DESCRIPTION = $("#" + TYPE_CODE + "-DESCRIPTION-" + CHARGE_ID).html();
+                        DESCRIPTION = DESCRIPTION.replace(/\s+/g, ' ');
+                        var AMOUNT = $("#" + TYPE_CODE + "-AMOUNT-" + CHARGE_ID).html();
+                        AMOUNT = AMOUNT.replace(/\$|,/g, '');
+
+                        var DISCOUNT_DESCRIPTION = '';
+
+                        if ( TYPE_CODE === 'DISCOUNT' ) {
+                                var MONTH_DURATION = parseInt( $(this).data("month_duration") );
+                                var DISCOUNT = AMOUNT.replace(/\$|,/g, '');
+                                var TOTAL_DISCOUNT_COST = ( ( parseFloat("[% data.membership.amount %]") - parseFloat(DISCOUNT) ) * MONTH_DURATION );
+                                AMOUNT = __ADMINFIT__.commify(parseFloat(TOTAL_DISCOUNT_COST).toFixed(2));
+                                DISCOUNT_DESCRIPTION = '<small class="text-muted">' + '$' + __ADMINFIT__.commify( parseFloat("[% data.membership.amount %]").toFixed(2) );
+                                DISCOUNT_DESCRIPTION += ' - $' + __ADMINFIT__.commify(DISCOUNT);
+                                if ( parseInt(MONTH_DURATION) > 1 ) DISCOUNT_DESCRIPTION += ' * ' + MONTH_DURATION;
+                                DISCOUNT_DESCRIPTION += '&nbsp;&nbsp;=&nbsp;&nbsp;</small>';
+                                DESCRIPTION += '<br><small class="text-muted">' + $(this).data("next_months") + '</small>';
+                        }
+
+                        var VISITS_EXPIRATION_DATE;
+                        var IS_VISITS_PACKAGE = $(this).data("product_type_code") === 'VISITS';
+
+                        if ( IS_VISITS_PACKAGE ) {
+                                VISITS_EXPIRATION_DATE = $(this).data("visits_expiration_date");
+                        }
+
+                        _add_to_cart({
+                                type_code : TYPE_CODE,
+                                charge_id : CHARGE_ID,
+                                description : DESCRIPTION.trim(),
+                                amount : AMOUNT,
+                                discount_description : DISCOUNT_DESCRIPTION.trim(),
+                                is_visits_package : IS_VISITS_PACKAGE,
+                                visits_expiration_date : VISITS_EXPIRATION_DATE,
+                        });
+
+                });
+
+                $("table.TABLE-SHOPPING-CART").on("click", "a.A-REMOVE-FROM-CART", function() {
+
+                        var CART_ITEM_ID = $(this).parents("tr").attr("id");
+                        var CHARGE_ID = $(this).parents("tr").data("charge_id");
+                        var TYPE_CODE = $(this).parents("tr").data("type_code");
+                        $("table.TABLE-SHOPPING-CART tr#" + CART_ITEM_ID).remove();
+
+                        if ( TYPE_CODE === 'PRODUCT' ) {
+                                _increase_available_inventory(CHARGE_ID);
+                        }
+                        else if ( TYPE_CODE === 'DISCOUNT' ) {
+                                _enable_discount_buttons();
+                        }
+                        else if ( TYPE_CODE === 'DEBT' ) {
+                                _enable_add_button(CHARGE_ID);
+                        }
+                        else if ( TYPE_CODE === 'NEW' ) {
+                                var YM = $(this).parents("tr").data("ym");
+                                var NEW_CHARGE_TYPE_CODE = $(this).parents("tr").data("new_charge_type_code");
+                                if ( NEW_CHARGE_TYPE_CODE === "M" ) {
+                                        $("#TAG-CHARGED-MEMBERSHIP-MONTHS #NEW-CHARGE-MEMBERSHIP-TAG-" + YM).remove();
+                                        $("#DIV-ADD-CHARGE select[name=ym] option[value=" + YM + "]").removeData("membership_charged");
+                                }
+                        }
+
+                        _update_interface();
+
+                });
+
+                $("table.TABLE-SHOPPING-CART").on("click", "a.A-PARTIAL-PAYMENT", function() {
+
+                        var CHARGE_ID = $(this).parents("tr").data("charge_id");
+                        var AMOUNT = $(this).siblings("span.SPAN-ITEM-TOTAL").html().replace(/\$|,/g, '');
+
+                        var DISPLAY_ORIGINAL_AMOUNT = __ADMINFIT__.commify( parseFloat(AMOUNT).toFixed(2) );
+                        var ORIGINAL_AMOUNT = parseFloat(AMOUNT).toFixed(2);
+                        if ( !!$(this).data("zero") ) AMOUNT = parseInt(0).toFixed(2);
+
+                        var DIV_VISITS_EXPIRATION_HTML = "";
+
+                        if ( $(this).parent("td").find("div#DIV-VISITS-EXPIRATION").length ) {
+                                DIV_VISITS_EXPIRATION_HTML = "<div style='margin-top:10px;width:130px'>" + $(this).parent("td").find("div#DIV-VISITS-EXPIRATION").html() + "</div>";
+                        }
+
+                        $(this).parent("td").html(`
+                        <div class="input-group" style="width:150px">
+                        <span class="input-group-prepend">
+                                <span class="input-group-text">$</span>
+                        </span>
+                        <input type="text" class="INPUT-PARTIAL-PAYMENT form-control text-right" maxlength="14" data-original_amount="${ORIGINAL_AMOUNT}" value="${AMOUNT}">
+                        </div>
+                        <small class="d-block text-muted pull-right">Precio original : $${DISPLAY_ORIGINAL_AMOUNT}&nbsp;</small>
+                        ${DIV_VISITS_EXPIRATION_HTML}
+                        `);
+
+                        if ( !!$(this).data("zero") ) _update_interface();
+
+                });
+
+                $("table.TABLE-SHOPPING-CART").on("keypress", "input.INPUT-PARTIAL-PAYMENT", function(e) {
+                        if ( !__ADMINFIT__.money_only(this, e) ) return false;
+                });
+
+                $("table.TABLE-SHOPPING-CART").on("keyup", "input.INPUT-PARTIAL-PAYMENT", function(e, INPUT) {
+                        _validate_partial_amount($(this));
+                        _update_interface();
+                });
+
+                $("#BTN-PAY-NOW").click( function() {
+
+                        var ITEMS = [];
+                        var PARTIAL_ERRORS = false;
+
+                        $("table.TABLE-SHOPPING-CART tr td.TD-CART-AMOUNT").each( function(i, TD) {
+
+                                var AMOUNT = 0;
+                                var ORIGINAL_AMOUNT = 0;
+
+                                if ( $(TD).find("span.SPAN-ITEM-TOTAL").length ) {
+                                        AMOUNT = parseFloat( $(TD).find("span.SPAN-ITEM-TOTAL").html().replace(/\$|,/g, '') );
+                                        ORIGINAL_AMOUNT = AMOUNT;
+                                }
+                                else if ( $(TD).find("input.INPUT-PARTIAL-PAYMENT").length ) {
+                                        var INPUT = $(TD).find("input.INPUT-PARTIAL-PAYMENT");
+                                        if ( !_validate_partial_amount(INPUT) ) PARTIAL_ERRORS = true;
+                                        AMOUNT = parseFloat( INPUT.val().replace(/\$|,/g, '') );
+                                        ORIGINAL_AMOUNT = parseFloat( String(INPUT.data("original_amount")).replace(/\$|,/g, '') );
+                                }
+
+                                var TYPE_CODE = $(TD).parents("tr").data("type_code");
+                                var CHARGE_ID = $(TD).parents("tr").data("charge_id");
+
+                                var IS_VISITS_PACKAGE = !!$(TD).parents("tr").data("is_visits_package");
+                                var VISITS_EXPIRATION_DATE = "";
+
+                                if ( !!$(TD).parents("tr").data("is_visits_package") ) {
+                                        VISITS_EXPIRATION_DATE = $(TD).find("input#VISITS-EXPIRATION-DATE").val();
+                                }
+
+                                var YM = "";
+                                var NEW_CHARGE_TYPE_CODE = "";
+                                var CONCEPT = "";
+                                var NOTES = "";
+                                var QUANTITY = 0;
+
+                                if ( TYPE_CODE === "NEW" ) {
+                                        YM = $(TD).parents("tr").data("ym");
+                                        NEW_CHARGE_TYPE_CODE = $(TD).parents("tr").data("new_charge_type_code");
+                                        var TD_DESCRIPTION = $(TD).parents("tr").find("td.TD-CART-DESCRIPTION");
+                                        CONCEPT = TD_DESCRIPTION.clone().children().remove().end().text();
+                                        NOTES = TD_DESCRIPTION.find("small.NEW-CHARGE-NOTES").text();
+                                }
+                                else if ( TYPE_CODE === "PRE" ) {
+                                        var TD_DESCRIPTION = $(TD).parents("tr").find("td.TD-CART-DESCRIPTION");
+                                        NOTES = TD_DESCRIPTION.find("small.NEW-PREPAY-NOTES").text();
+                                }
+                                else if ( TYPE_CODE === "PRODUCT" ) {
+                                        QUANTITY = parseInt($(TD).parents("tr").find("td.TD-CART-QUANTITY").html());
+                                }
+
+                                ITEMS.push({
+                                        amount : AMOUNT,
+                                        original_amount : ORIGINAL_AMOUNT,
+                                        type_code : TYPE_CODE,
+                                        id : CHARGE_ID,
+                                        ym : YM,
+                                        new_charge_type_code : NEW_CHARGE_TYPE_CODE,
+                                        concept : CONCEPT.trim(),
+                                        notes : NOTES.trim(),
+                                        visits_expiration_date : VISITS_EXPIRATION_DATE,
+                                        quantity : QUANTITY,
+                                });
+
+                        });
+
+                        if ( PARTIAL_ERRORS ) return false;
+                        if ( !ITEMS || ITEMS.length <= 0 ) return false;
+
+                        var JSON_STRING = JSON.stringify(ITEMS);
+                        $("#JSON-CART-ITEMS").val(JSON_STRING);
+                        $(this).parents("form").submit();
+
+                });
+
+                $("#DIV-ADD-PREPAY a#A-CLOSE-ADD-PREPAY").click( function() {
+                        $("#DIV-ADD-PREPAY").hide();
+                        $(".BTN-NEW-ITEMS").removeClass("disabled");
+                });
+
+                $("#A-ADD-PREPAY").click( function() {
+                        $("#DIV-ADD-PREPAY input[name=amount]").val("");
+                        $("#DIV-ADD-PREPAY textarea[name=notes]").val("");
+                        $("#DIV-ADD-PREPAY").fadeIn();
+                        $(".BTN-NEW-ITEMS").addClass("disabled");
+                });
+
+                $("#DIV-ADD-PREPAY button[type=submit]").click( function() {
+
+                        var AMOUNT = $("#DIV-ADD-PREPAY input[name=amount]").val();
+                        AMOUNT = AMOUNT.replace(/\$|,/g, '');
+                        AMOUNT = parseFloat(AMOUNT);
+
+                        if ( !AMOUNT || AMOUNT <= 0 ) {
+                                __ADMINFIT__.display_error('Es necesario especificar una cantidad.', null, 'ADD_PREPAY');
+                                return false;
+                        }
+
+                        AMOUNT = parseFloat(AMOUNT).toFixed(2);
+
+                        var NOTES = $("#DIV-ADD-PREPAY textarea[name=notes]").val();
+                        var DESCRIPTION = '<i class="fe fe-arrow-up-circle text-purple"></i>&nbsp;Prepago';
+                        if ( NOTES.length >= 0 ) DESCRIPTION += '<br><small class="text-muted NEW-PREPAY-NOTES">' + NOTES + "</small>";
+
+                        _add_to_cart({
+                                type_code : 'PRE',
+                                charge_id : __ADMINFIT__.uuid(),
+                                description : DESCRIPTION,
+                                amount : AMOUNT,
+                        });
+
+                        $("#DIV-ADD-PREPAY").hide();
+                        $(".BTN-NEW-ITEMS").removeClass("disabled");
+
+                });
+
+
+                $("#DIV-ADD-CHARGE a#A-CLOSE-ADD-NEW-CHARGE").click( function() {
+                        $("#DIV-ADD-CHARGE").hide();
+                        $(".BTN-NEW-ITEMS").removeClass("disabled");
+                });
+
+                $("#A-ADD-NEW-CHARGE").click( function() {
+                        // reset the form
+                        $("select[name=ym]")[0].selectize.setValue("[% ttf.today_parts().year %]_[% ttf.today_parts().month %]");
+                        $("#DIV-ADD-CHARGE input[name=type_code][value=I]").prop("checked", "checked");
+                        $("#DIV-ADD-CHARGE input[name=type_code]").trigger("change");
+                        $("#DIV-ADD-CHARGE input[name=concept]").val("");
+                        $("#DIV-ADD-CHARGE input[name=amount]").val("");
+                        $("#DIV-ADD-CHARGE textarea[name=notes]").val("");
+
+                        $("#DIV-ADD-CHARGE").fadeIn();
+                        $(".BTN-NEW-ITEMS").addClass("disabled");
+
+                });
+
+                $("#DIV-ADD-CHARGE button[type=submit]").click( function() {
+
+                        var YM_SELECTIZE = $("select[name=ym]")[0].selectize;
+                        var YM_SELECTED_OPTION = YM_SELECTIZE.getOption( YM_SELECTIZE.getValue() );
+                        var MEMBERSHIP_CHARGED = /check-circle/.test(YM_SELECTED_OPTION.html());
+                        var NEW_CHARGE_TYPE_CODE = $("#DIV-ADD-CHARGE input[name=type_code]:checked").val();
+
+                        if ( MEMBERSHIP_CHARGED && NEW_CHARGE_TYPE_CODE === "M" ) {
+                                __ADMINFIT__.display_error('El periodo seleccionado ya tiene una membres&iacute;a cobrada.', null, 'ADD_CHARGE');
+                                return false;
+                        }
+
+                        var YM = $("#DIV-ADD-CHARGE select[name=ym] option:selected").val();
+                        var DISPLAY_YM = $("#DIV-ADD-CHARGE select[name=ym] option:selected").text();
+                        DISPLAY_YM = DISPLAY_YM.replace(/\s\s+/g, ' ');
+
+                        var AMOUNT = $("#DIV-ADD-CHARGE input[name=amount]").val();
+                        AMOUNT = AMOUNT.replace(/\$|,/g, '');
+                        AMOUNT = parseFloat(AMOUNT);
+
+                        if ( !AMOUNT || AMOUNT <= 0 ) {
+                                __ADMINFIT__.display_error('Es necesario especificar un precio.', null, 'ADD_CHARGE');
+                                return false;
+                        }
+
+                        AMOUNT = parseFloat(AMOUNT).toFixed(2);
+
+                        var CONCEPT = $("#DIV-ADD-CHARGE input[name=concept]").val();
+
+                        // set this to I for non-clients
+                        if ( !NEW_CHARGE_TYPE_CODE ) NEW_CHARGE_TYPE_CODE = "I";
+
+                        if ( NEW_CHARGE_TYPE_CODE === "I" && CONCEPT.length === 0 ) {
+                                __ADMINFIT__.display_error('Es necesario especificar un concepto.', null, 'ADD_CHARGE');
+                                return false;
+                        }
+
+                        if ( NEW_CHARGE_TYPE_CODE === "M" ) {
+                                CONCEPT = 'Membres&iacute;a mensual';
+                                $("#DIV-ADD-CHARGE select[name=ym] option[value=" + YM + "]").attr("data-membership_charged","1");
+                                $("#TAG-CHARGED-MEMBERSHIP-MONTHS").append(`
+                                <div class="tag tag-red" id="NEW-CHARGE-MEMBERSHIP-TAG-${YM}">
+                                        ${DISPLAY_YM}<span class="tag-addon"><i class="fe fe-plus"></i></span>
+                                </div>`);
+                        }
+
+                        var NOTES = $("#DIV-ADD-CHARGE textarea[name=notes]").val();
+                        var DESCRIPTION = '<i class="fe fe-plus-circle text-red"></i>&nbsp;' + CONCEPT + '<br><small class="text-muted NEW-CHARGE-DISPLAY-YM">' + DISPLAY_YM + "</small>";
+                        if ( NOTES.length >= 0 ) DESCRIPTION += '<br><small class="text-muted NEW-CHARGE-NOTES">' + NOTES + "</small>";
+
+                        _add_to_cart({
+                                type_code : 'NEW',
+                                new_charge_type_code : NEW_CHARGE_TYPE_CODE.trim(),
+                                ym : YM,
+                                charge_id : __ADMINFIT__.uuid(),
+                                description : DESCRIPTION.trim(),
+                                amount : AMOUNT,
+                        });
+
+                        $("#DIV-ADD-CHARGE").hide();
+                        $(".BTN-NEW-ITEMS").removeClass("disabled");
+
+                });
+
+        });
+
+        [% IF p.adeudo == 'nuevo' %]setTimeout(function(){$("#A-ADD-NEW-CHARGE").click()},100);[% END %]
+
+});
+
+function _validate_partial_amount(INPUT) {
+
+        var INPUT_AMOUNT = parseFloat(INPUT.val());
+        if ( isNaN(INPUT_AMOUNT) ) INPUT_AMOUNT = 0;
+        var ORIGINAL_AMOUNT = parseFloat(INPUT.data("original_amount"));
+        var TYPE_CODE = $(INPUT).parents("tr").data("type_code");
+
+        if ( TYPE_CODE === "DEBT" && ( !INPUT_AMOUNT || INPUT_AMOUNT <= 0 ) ) {
+                __ADMINFIT__.display_error( "La parcialidad de un adeudo existente debe ser mayor a cero.", null, 'SHOPPING_CART');
+                INPUT.addClass("is-invalid");
+                $("#BTN-PAY-NOW").addClass("disabled");
+                return false;
+        }
+
+        if ( INPUT_AMOUNT > ORIGINAL_AMOUNT ) {
+                __ADMINFIT__.display_error( "La parcialidad no puede ser mayor al valor original : $" + __ADMINFIT__.commify(ORIGINAL_AMOUNT.toFixed(2)), null, 'SHOPPING_CART');
+                INPUT.addClass("is-invalid");
+                $("#BTN-PAY-NOW").addClass("disabled");
+                return false;
+        }
+
+        INPUT.removeClass("is-invalid");
+        $("#BTN-PAY-NOW").removeClass("disabled");
+
+        return true;
+
+}
+
+function _update_interface() {
+
+        var TOTAL = 0;
+        $("#BTN-PAY-NOW").removeClass("disabled");
+
+        $("table.TABLE-SHOPPING-CART tr td.TD-CART-AMOUNT").each( function(i, TD) {
+                if ( $(TD).find("span.SPAN-ITEM-TOTAL").length ) {
+                        TOTAL += parseFloat( $(TD).find("span.SPAN-ITEM-TOTAL").html().replace(/\$|,/g, '') );
+                }
+                else if ( $(TD).find("input.INPUT-PARTIAL-PAYMENT").length ) {
+                        TOTAL += parseFloat( $(TD).find("input.INPUT-PARTIAL-PAYMENT").val().replace(/\$|,/g, '') );
+                }
+        });
+
+        if ( isNaN(TOTAL) ) TOTAL = 0;
+
+        if ( $("table.TABLE-SHOPPING-CART tr").size() === 0 ) $("#DIV-SHOPPING-CART").hide();
+
+        // this lives in the INCLUDE
+        _update_payment_totals(TOTAL);
+
+}
+
+function _decrease_available_inventory(CHARGE_ID) {
+
+        var ADD_BUTTON = $("a.BTN-ADD-TO-CART[data-charge_id=" + CHARGE_ID + "]");
+        var TYPE_CODE = ADD_BUTTON.data("type_code");
+
+        if ( TYPE_CODE === "PRODUCT" ) {
+
+                var SPAN_AMOUNT = $("#PRODUCT-INVENTORY-" + CHARGE_ID);
+                if ( !SPAN_AMOUNT.length ) return true;
+                var CURRENT = parseInt( SPAN_AMOUNT.html() );
+                SPAN_AMOUNT.html( CURRENT - 1 ).effect("highlight", "slow");
+                var UPDATED_AMOUNT = parseInt( SPAN_AMOUNT.html() );
+
+                if ( UPDATED_AMOUNT === 0 ) {
+                        SPAN_AMOUNT.removeClass("text-green").addClass("text-red");
+                        _disable_add_buttons(CHARGE_ID);
+                }
+
+        }
+
+}
+
+function _increase_available_inventory(CHARGE_ID) {
+
+        var ADD_BUTTON = $("a.BTN-ADD-TO-CART[data-charge_id=" + CHARGE_ID + "]");
+        var TYPE_CODE = ADD_BUTTON.data("type_code");
+
+        if ( TYPE_CODE === "PRODUCT" ) {
+                var SPAN_AMOUNT = $("#PRODUCT-INVENTORY-" + CHARGE_ID);
+                var STARTING_INVENTORY_QUANTITY = SPAN_AMOUNT.data("starting_inventory_quantity");
+                if ( !SPAN_AMOUNT.length ) return true;
+                SPAN_AMOUNT.html( STARTING_INVENTORY_QUANTITY ).effect("highlight", "slow");
+                var UPDATED_AMOUNT = parseInt( SPAN_AMOUNT.html() );
+                if ( UPDATED_AMOUNT >= 0 ) {
+                        SPAN_AMOUNT.removeClass("text-red").addClass("text-green");
+                        _enable_add_button(CHARGE_ID);
+                }
+        }
+
+}
+
+function _disable_discount_buttons(CHARGE_ID) {
+        $("a.BTN-ADD-TO-CART[data-type_code=DISCOUNT").each( function() {
+                if ( $(this).data('charge_id') === CHARGE_ID ) {
+                        $(this).find("i.fa").removeClass("fa-plus").addClass("fa-check");
+                }
+                else {
+                        $(this).find("i.fa").removeClass("fa-plus").addClass("fa-remove");
+                }
+                $(this).removeClass("btn-outline-success");
+        });
+        _disable_same_membership_buttons(CHARGE_ID);
+}
+
+function _enable_discount_buttons() {
+        $("a.BTN-ADD-TO-CART[data-type_code=DISCOUNT").each( function() {
+                var CHARGE_ID = $(this).data("charge_id");
+                _enable_add_button(CHARGE_ID);
+                _enable_same_membership_buttons(CHARGE_ID)
+        });
+}
+
+function _disable_add_buttons(CHARGE_ID) {
+        var ADD_BUTTON = $("a.BTN-ADD-TO-CART[data-charge_id=" + CHARGE_ID + "]");
+        ADD_BUTTON.find("i.fa").removeClass("fa-plus").addClass("fa-check");
+        ADD_BUTTON.removeClass("btn-outline-success");
+        _disable_same_membership_buttons(CHARGE_ID);
+}
+
+function _disable_same_membership_buttons(CHARGE_ID) {
+
+        var ADD_BUTTON = $("a.BTN-ADD-TO-CART[data-charge_id=" + CHARGE_ID + "]");
+        var CLASSES = ADD_BUTTON.prop("classList");
+
+        CLASSES.forEach( function( CLASS_NAME ) {
+                if ( CLASS_NAME.substr(0,15) === "BTN-MEMBERSHIP-" ) {
+                        $("a." + CLASS_NAME + " i.fa").removeClass("fa-plus").addClass("fa-check");
+                        $("a." + CLASS_NAME).removeClass("btn-outline-success");
+                }
+        });
+
+}
+
+function _enable_same_membership_buttons(CHARGE_ID) {
+
+        var ADD_BUTTON = $("a.BTN-ADD-TO-CART[data-charge_id=" + CHARGE_ID + "]");
+        var CLASSES = ADD_BUTTON.prop("classList");
+
+        CLASSES.forEach( function( CLASS_NAME ) {
+                if ( CLASS_NAME.substr(0,15) === "BTN-MEMBERSHIP-" ) {
+                        $("a." + CLASS_NAME + " i.fa").removeClass("fa-check").removeClass("fa-remove").addClass("fa-plus");
+                        $("a." + CLASS_NAME).addClass("btn-outline-success");
+                }
+        });
+
+}
+
+function _enable_add_button(CHARGE_ID) {
+        var ADD_BUTTON = $("a.BTN-ADD-TO-CART[data-charge_id=" + CHARGE_ID + "]");
+        ADD_BUTTON.find("i.fa").removeClass("fa-check").removeClass("fa-remove").addClass("fa-plus");
+        ADD_BUTTON.addClass("btn-outline-success");
+        _enable_same_membership_buttons(CHARGE_ID)
+}
+
+function _disable_visits_package_buttons() {
+        $("a.BTN-ADD-TO-CART[data-product_type_code=VISITS]").each( function(i, VISITS_BUTTON) {
+                $(VISITS_BUTTON).find("i.fa").removeClass("fa-plus").addClass("fa-check");
+                $(VISITS_BUTTON).removeClass("btn-outline-success");
+        });
+}
+
+function _add_to_cart(ITEM) {
+
+        var CART_ITEM_UUID = __ADMINFIT__.uuid();
+        if ( !ITEM.discount_description ) ITEM.discount_description = '';
+        ITEM.amount = __ADMINFIT__.commify(ITEM.amount);
+
+        var PARTIAL_PAYMENT_BUTTON_HTML = '<br><a href="javascript:;" class="A-PARTIAL-PAYMENT btn btn-secondary btn-sm">Parcialidad</a>';
+
+        if ( ITEM.type_code !== "DEBT" )
+                PARTIAL_PAYMENT_BUTTON_HTML += '&nbsp;&nbsp;<a href="javascript:;" data-zero=1 class="A-PARTIAL-PAYMENT btn btn-secondary btn-sm">Cero</a>';
+
+        if ( ITEM.type_code === "PRE" ) PARTIAL_PAYMENT_BUTTON_HTML = "";
+
+        var VISITS_EXPIRATION_HTML = "";
+
+        if ( ITEM.is_visits_package && ITEM.visits_expiration_date ) {
+                VISITS_EXPIRATION_HTML = `
+                        <div class="form-group" id="DIV-VISITS-EXPIRATION" style="margin-top:10px;width:130px">
+                                <label class="form-label">Expiraci&oacute;n</label>
+                                <div class="input-group">
+                                        <input type="text" autocomplete="off" id="VISITS-EXPIRATION-DATE" class="date-calendar form-control btn-sm text-right" value="${ITEM.visits_expiration_date}">
+                                        <span class="input-group-append">
+                                                <span class="input-group-text">
+                                                        <i class="fe fe-calendar"></i>
+                                                </span>
+                                        </span>
+                                </div>
+                        </div>`;
+        }
+
+        var YM = "";
+        var NEW_CHARGE_TYPE_CODE = "";
+
+        if ( ITEM.type_code === "NEW" ) {
+                YM = ITEM.ym;
+                NEW_CHARGE_TYPE_CODE = ITEM.new_charge_type_code;
+        }
+
+        $("#DIV-SHOPPING-CART").fadeIn();
+
+        if ( ITEM.type_code === "PRODUCT" ) var PRODUCT_QUANTITY = _get_same_product_cart_count(ITEM.charge_id);
+
+        if ( ITEM.type_code === "PRODUCT" && PRODUCT_QUANTITY > 0 ) {
+                _add_cart_item_quantity(ITEM.charge_id);
+        }
+        else {
+                _add_shopping_cart_table_tr({
+                        cart_item_uuid : CART_ITEM_UUID,
+                        ym : YM,
+                        is_visits_package : ITEM.is_visits_package,
+                        new_charge_type_code : NEW_CHARGE_TYPE_CODE,
+                        type_code : ITEM.type_code,
+                        charge_id : ITEM.charge_id,
+                        description :  ITEM.description,
+                        discount_description : ITEM.discount_description,
+                        amount : ITEM.amount,
+                        partial_payment_button_html : PARTIAL_PAYMENT_BUTTON_HTML,
+                        visits_expiration_html : VISITS_EXPIRATION_HTML,
+                        quantity : PRODUCT_QUANTITY,
+                });
+        }
+
+        if ( ITEM.is_visits_package && ITEM.visits_expiration_date ) {
+                $("table.TABLE-SHOPPING-CART").on("focusin", 'input#VISITS-EXPIRATION-DATE', function() {
+                        $('.date-calendar').daterangepicker(DATERANGE_PICKER_OPTIONS);
+                });
+                _disable_visits_package_buttons();
+        }
+
+        $("#TR-CART-" + CART_ITEM_UUID).effect("highlight", 1000 );
+
+        if ( ITEM.type_code === 'PRODUCT' ) {
+                _decrease_available_inventory(ITEM.charge_id);
+        }
+        else if ( ITEM.type_code === 'DISCOUNT' ) {
+                _disable_discount_buttons(ITEM.charge_id);
+        }
+        else if ( ITEM.type_code === 'DEBT' ) {
+                _disable_add_buttons(ITEM.charge_id);
+        }
+
+        _update_interface();
+
+}
+
+function _add_shopping_cart_table_tr(CART_ITEM) {
+
+        if ( CART_ITEM.type_code === "PRODUCT" ) {
+                CART_ITEM.quantity = 1;
+        }
+        else {
+                CART_ITEM.quantity = "-";
+        }
+
+        $("table.TABLE-SHOPPING-CART").append(`
+                <tr id="TR-CART-${CART_ITEM.cart_item_uuid}"
+                        data-ym="${CART_ITEM.ym}"
+                        data-is_visits_package="${CART_ITEM.is_visits_package}"
+                        data-new_charge_type_code="${CART_ITEM.new_charge_type_code}"
+                        data-type_code="${CART_ITEM.type_code}"
+                        data-single_item_amount="${CART_ITEM.amount}"
+                        data-charge_id="${CART_ITEM.charge_id}">
+                        <td class="w-1">
+                                <a class="no-underline text-red A-REMOVE-FROM-CART" href="javascript:;"><i class="fe fe-x mr-1"></i></a>
+                        </td>
+                        <td class="w-1 TD-CART-QUANTITY">${CART_ITEM.quantity}</td>
+                        <td class="TD-CART-DESCRIPTION">${CART_ITEM.description}</td>
+                        <td class="TD-CART-AMOUNT" align="right">
+                                ${CART_ITEM.discount_description}
+                                $<span class="SPAN-ITEM-TOTAL">${CART_ITEM.amount}</span>
+                                ${CART_ITEM.partial_payment_button_html}
+                                ${CART_ITEM.visits_expiration_html}
+                        </td>
+                </tr>`);
+
+        // new charges start off with partial amount enabled
+        if ( CART_ITEM.type_code === "NEW" ) {
+                $("tr#TR-CART-" + CART_ITEM.cart_item_uuid).find("a.A-PARTIAL-PAYMENT").click();
+        }
+
+}
+
+function _add_cart_item_quantity(PRODUCT_ID) {
+
+        var SAME_PRODUCT_CART_COUNT = _get_same_product_cart_count(PRODUCT_ID);
+        SAME_PRODUCT_CART_COUNT++;
+
+        if ( SAME_PRODUCT_CART_COUNT > 1 ) {
+                $("table.TABLE-SHOPPING-CART tr[data-type_code=PRODUCT][data-charge_id=" + PRODUCT_ID + "] td.TD-CART-QUANTITY").css("font-weight", "bold");
+        }
+
+        $("table.TABLE-SHOPPING-CART tr[data-type_code=PRODUCT][data-charge_id=" + PRODUCT_ID + "] td.TD-CART-QUANTITY").html(
+                parseInt(SAME_PRODUCT_CART_COUNT)
+        ).effect("highlight", "slow");
+
+        var AMOUNT = $("table.TABLE-SHOPPING-CART tr[data-charge_id=" + PRODUCT_ID + "]").data("single_item_amount");
+        AMOUNT = AMOUNT.replace(/\$|,/g, '');
+
+        var TD = $("table.TABLE-SHOPPING-CART tr[data-type_code=PRODUCT][data-charge_id=" + PRODUCT_ID + "]").find("td.TD-CART-AMOUNT");
+
+        if ( $(TD).find("span.SPAN-ITEM-TOTAL").length ) {
+                $(TD).find("span.SPAN-ITEM-TOTAL").html(__ADMINFIT__.commify(parseFloat(AMOUNT * SAME_PRODUCT_CART_COUNT).toFixed(2)));
+        }
+        else if ( $(TD).find("input.INPUT-PARTIAL-PAYMENT").length ) {
+                $(TD).find("input.INPUT-PARTIAL-PAYMENT").val(__ADMINFIT__.commify(parseFloat(AMOUNT * SAME_PRODUCT_CART_COUNT).toFixed(2)));
+        }
+
+}
+
+function _get_same_product_cart_count(PRODUCT_ID) {
+        var SAME_PRODUCT_CART_COUNT = $("table.TABLE-SHOPPING-CART tr[data-charge_id=" + PRODUCT_ID + "]").size();
+        if ( !SAME_PRODUCT_CART_COUNT ) return 0;
+        SAME_PRODUCT_CART_COUNT = parseInt( $("table.TABLE-SHOPPING-CART tr[data-charge_id=" + PRODUCT_ID + "]").find("td.TD-CART-QUANTITY").html() );
+        return SAME_PRODUCT_CART_COUNT;
+}
+
+</script>
+
+<div class="col-sm-4">
+
+        <div class="input-group" style="margin-bottom:20px;margin-top:10px">
+                <span class="input-group-prepend">
+                        <span class="input-group-text">
+                                <i class="fe fe-search mr-1"></i>
+                        </span>
+                </span>
+                <input type="text" id="INPUT-CHARGE-SEARCH" class="form-control" placeholder="Buscar">
+                <span class="input-group-append">
+                        <span class="input-group-text">
+                                <a href="javascript:;" class="text-inherit" id="A-CANCEL-SEARCH">
+                                        <i class="fe fe-x mr-1"></i>
+                                </a>
+                        </span>
+                </span>
+        </div>
+
+        <div style="margin-bottom:20px;text-align:right">
+                <a href="javascript:;" id="A-ADD-NEW-CHARGE" class="BTN-NEW-ITEMS pull-right btn btn-secondary btn-sm">
+                        <i class="fe fe-plus"></i>
+                        Adeudo
+                </a>
+                <a href="javascript:;" id="A-ADD-PREPAY" class="BTN-NEW-ITEMS pull-right btn btn-secondary btn-sm">
+                        <i class="fe fe-dollar-sign"></i>
+                        Prepago
+                </a>
+        </div>
+
+        [% IF data.balance.balance > 0 %]
+                <div class="card p-3">
+                        <div class="d-flex align-items-center">
+                                <span class="stamp stamp-md bg-success mr-3">
+                                        <i class="fe fe-arrow-up-circle"></i>
+                                </span>
+                                <div>
+                                        <h4 class="m-0">
+                                                $[% ttf.commify(data.balance.balance || 0) %]
+                                        </h4>
+                                        <small class="text-muted">Saldo a favor</small>
+                                </div>
+                        </div>
+                </div>
+        [% END %]
+
+        <div class="card CARD-CHARGES">
+                <div class="card-status bg-red"></div>
+                <div class="card-header">
+                        <h4 class="card-title">
+                                <span class="badge badge-danger">[% data.pending.size %]</span>
+                                &nbsp;
+                                <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => p.id ) %]">Adeudos</a>
+                        </h4>
+                        [% IF data.total_pending_amount > 0 %]
+                                <div class="card-options small text-muted">$[% ttf.commify(data.total_pending_amount) %]</div>
+                        [% END %]
+                </div>
+                [% IF data.pending.size %]
+                        <table class="table card-table TABLE-CHARGES">
+                                <tbody>
+                                        [% FOREACH debt = data.pending %]
+                                               <tr>
+                                                       <td width="1">
+                                                               <a href="javascript:;"
+                                                                        data-charge_id="[% debt.id %]"
+                                                                        data-type_code="DEBT"
+                                                                        class="[% IF debt.type_code == 'M' %]BTN-MEMBERSHIP-[% debt.year %]-[% debt.month %][% END %]
+                                                                                BTN-ADD-TO-CART btn btn-sm btn-outline-success">
+                                                                       <i class="fa fa-plus"></i>
+                                                               </a>
+                                                       </td>
+                                                       <td class="table-search-col" id="DEBT-DESCRIPTION-[% debt.id %]">
+                                                               <a class="text-inherit" href="[% ttf.uri( c => 'finanzas', m => 'cobro', id => debt.id )%]">
+                                                                       [% debt.concept.concept %]
+                                                               </a>
+                                                               <br>
+                                                               <small class="text-muted">
+                                                                       [% debt.year %] &raquo; [% debt.display_month %]
+                                                                       [% IF debt.concept.details %]<br>[% debt.concept.details %][% END %]
+                                                               </small>
+                                                       </td>
+                                                       <td class="text-right" id="DEBT-AMOUNT-[% debt.id %]">$[% ttf.commify(debt.remaining_amount) %]</td>
+                                               </tr>
+                                       [% END %]
+                                </tbody>
+                        </table>
+                [% ELSE %]
+                        <div class="card-body">
+                                <div class="alert alert-success" role="alert">
+                                        <i class="fe fe-check mr-2" aria-hidden="true"></i>
+                                        <b>Sin adeudos.</b>
+                                </div>
+                        </div>
+                [% END %]
+        </div>
+
+        <div class="card CARD-CHARGES">
+                <div class="card-status bg-green"></div>
+                <div class="card-header">
+                        <h4 class="card-title">
+                                <span class="badge badge-success">[% data.products.size %]</span>
+                                &nbsp;
+                                <a href="[% ttf.uri( c => 'ventas', m => 'default' ) %]">Productos</a>
+                        </h4>
+                        <div class="card-options">
+                                <div class="col-auto">
+                                        <div class="item-action dropdown show">
+                                                <a href="javascript:;" data-toggle="dropdown" aria-expanded="false" class="pull-right btn btn-secondary btn-sm">
+                                                        <i class="fe fe-chevron-down"></i>
+                                                        Tipos
+                                                </a>
+                                                <div class="dropdown-menu dropdown-menu-right" x-placement="bottom-end">
+                                                        <a href="javascript:;" class="PRODUCT-TYPE-FILTER dropdown-item" data-type_code="ALL">
+                                                                <span class="badge badge-primary">[% data.product_totals.ALL || 0 %]</span>
+                                                                &nbsp;
+                                                                Todos
+                                                        </a>
+                                                        [% IF data.product_totals.FOOD > 0 %]
+                                                                <a href="javascript:;" class="PRODUCT-TYPE-FILTER dropdown-item" data-type_code="FOOD">
+                                                                        <span class="badge badge-success">[% data.product_totals.FOOD || 0 %]</span>
+                                                                        &nbsp;
+                                                                        Bebidas y alimentos
+                                                                </a>
+                                                        [% END %]
+                                                        [% IF data.product_totals.EQUIPMENT > 0 %]
+                                                                <a href="javascript:;" class="PRODUCT-TYPE-FILTER dropdown-item" data-type_code="EQUIPMENT">
+                                                                        <span class="badge badge-success">[% data.product_totals.EQUIPMENT || 0 %]</span>
+                                                                        &nbsp;
+                                                                        Equipo
+                                                                </a>
+                                                        [% END %]
+                                                        [% IF data.product_totals.ENROLLMENTS > 0 %]
+                                                                <a href="javascript:;" class="PRODUCT-TYPE-FILTER dropdown-item" data-type_code="ENROLLMENTS">
+                                                                        <span class="badge badge-success">[% data.product_totals.ENROLLMENTS || 0 %]</span>
+                                                                        &nbsp;
+                                                                        Inscripciones
+                                                                </a>
+                                                        [% END %]
+                                                        [% IF data.product_totals.OTHER > 0 %]
+                                                                <a href="javascript:;" class="PRODUCT-TYPE-FILTER dropdown-item" data-type_code="OTHER">
+                                                                        <span class="badge badge-success">[% data.product_totals.OTHER || 0 %]</span>
+                                                                        &nbsp;
+                                                                        Otros
+                                                                </a>
+                                                        [% END %]
+                                                        [% IF data.product_totals.VISITS > 0 %]
+                                                                <a href="javascript:;" class="PRODUCT-TYPE-FILTER dropdown-item" data-type_code="VISITS">
+                                                                        <span class="badge badge-success">[% data.product_totals.VISITS || 0 %]</span>
+                                                                        &nbsp;
+                                                                        Paquete de visitas
+                                                                </a>
+                                                        [% END %]
+                                                        [% IF data.product_totals.CLOTHING > 0 %]
+                                                                <a href="javascript:;" class="PRODUCT-TYPE-FILTER dropdown-item" data-type_code="CLOTHING">
+                                                                        <span class="badge badge-success">[% data.product_totals.CLOTHING || 0 %]</span>
+                                                                        &nbsp;
+                                                                        Ropa
+                                                                </a>
+                                                        [% END %]
+                                                        [% IF data.product_totals.SERVICES > 0 %]
+                                                                <a href="javascript:;" class="PRODUCT-TYPE-FILTER dropdown-item" data-type_code="SERVICES">
+                                                                        <span class="badge badge-success">[% data.product_totals.SERVICES || 0 %]</span>
+                                                                        &nbsp;
+                                                                        Servicios
+                                                                </a>
+                                                        [% END %]
+                                                        [% IF data.product_totals.SUPPLEMENTS > 0 %]
+                                                                <a href="javascript:;" class="PRODUCT-TYPE-FILTER dropdown-item" data-type_code="SUPPLEMENTS">
+                                                                        <span class="badge badge-success">[% data.product_totals.SUPPLEMENTS || 0 %]</span>
+                                                                        &nbsp;
+                                                                        Suplementos
+                                                                </a>
+                                                        [% END %]
+                                                        [% IF data.product_totals.SHOES > 0 %]
+                                                                <a href="javascript:;" class="PRODUCT-TYPE-FILTER dropdown-item" data-type_code="SHOES">
+                                                                        <span class="badge badge-success">[% data.product_totals.SHOES || 0 %]</span>
+                                                                        &nbsp;
+                                                                        Tenis
+                                                                </a>
+                                                        [% END %]
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+                [% IF data.products.size %]
+                        <table class="table card-table TABLE-CHARGES" id="TABLE-PRODUCTS">
+                                <tbody>
+                                        [% IF data.client_already_has_visits %]
+                                                 <tr>
+                                                         <td colspan="3" class="alert alert-info" role="alert">
+                                                                 <i class="fe fe-message-circle mr-2" aria-hidden="true"></i>
+                                                                 El cliente ya tiene un paquete de visitas activo. No es posible vender otro paquete hasta que se acaben o expiren sus visitas.
+                                                         </td>
+                                                 </tr>
+                                        [% END %]
+                                        [% FOREACH prod = data.products %]
+                                               <tr class="TR-PRODUCT-TYPE-CODE-[% prod.type_code %]" [% IF loop.count > 5 %]style="display:none"[% END %]>
+                                                       <td width="1">
+                                                               <a href="javascript:;"
+                                                                        data-charge_id="[% prod.id %]"
+                                                                        data-type_code="PRODUCT"
+                                                                        data-product_type_code="[% prod.type_code %]"
+                                                                        [% IF prod.type_code == 'VISITS' %]
+                                                                                data-visits_expiration_date="[% prod.visits_expiration_date %]"
+                                                                        [% END %]
+                                                                        class="BTN-ADD-TO-CART btn btn-sm btn-outline-success">
+                                                                       <i class="fa fa-plus"></i>
+                                                               </a>
+                                                       </td>
+                                                       <td class="table-search-col" id="PRODUCT-DESCRIPTION-[% prod.id %]">
+                                                               <a class="text-inherit" href="[% ttf.uri( c => 'ventas', m => 'ver', id => prod.id )%]">
+                                                                       [% prod.name %]
+                                                               </a>
+                                                               <br>
+                                                               <small class="text-muted">
+                                                                       [% prod.display_type %]
+                                                                       <br>
+                                                                       [% FOREACH detail = prod.data.values.sort %]
+                                                                                [% NEXT UNLESS detail %]
+                                                                                [% detail %]
+                                                                       [% END %]
+                                                               </small>
+                                                       </td>
+                                                       <td align="right">
+                                                               <span id="PRODUCT-AMOUNT-[% prod.id %]">$[% ttf.commify(prod.amount) %]</span>
+                                                               [% IF prod.use_inventory %]
+                                                                       <br>
+                                                                       <span class="pull-right text-muted d-none d-md-table-cell text-nowrap">
+                                                                               Inventario :
+                                                                               <span class="text-green" style="font-size:18px" data-starting_inventory_quantity="[% prod.inventory.TOTAL || 0 %]" id="PRODUCT-INVENTORY-[% prod.id %]">[% prod.inventory.TOTAL || 0 %]</span>
+                                                                       </span>
+                                                               [% END %]
+                                                       </td>
+                                               </tr>
+                                       [% END %]
+                                       [% IF data.products.size > 5 %]
+                                                <tr id="TR-PRODUCTS-SHOW-ALL">
+                                                        <td colspan="3">
+                                                                <a href="javascript:;" id="A-PRODUCTS-SHOW-ALL" class="text-inherit">
+                                                                        <i class="fe fe-chevron-down"></i>
+                                                                        Ver todos los productos ( [% data.products.size - 5 %] m&aacute;s )
+                                                                </a>
+                                                        </td>
+                                                </tr>
+                                        [% END %]
+                                </tbody>
+                        </table>
+                [% ELSE %]
+                        <div class="card-body">
+
+                                [% IF data.visits_package.active %]
+                                        <div class="alert alert-warning" role="alert">
+                                                <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                                <b>Paquete de visitas activo.</b>
+                                                <br><br>
+                                                El cliente seleccionado ya tiene un paquete de visitas activo.
+                                                <br><br>
+                                                No es posible venderle otro paquete de visitas hasta que el paquete actual se acabe o expire.
+                                                <br><br>
+                                                <small class="text-muted">
+                                                        [% data.visits_package.visits_remaining %]
+                                                        [% ttf.plural(data.visits_package.visits_remaining, 'Visita disponible', 'Visitas disponibles') %]
+                                                        <br>
+                                                        Expiraci&oacute;n : [% data.visits_package.visits_expiration_date %]
+                                                </small>
+                                        </div>
+                                [% END %]
+
+                                <div class="alert alert-info" role="alert">
+                                        <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                        <b>No se han encontrado productos.</b>
+                                        <br>
+                                        <br>
+                                        Posibles razones :
+                                        <ul>
+                                                <li>No se han agregado productos</li>
+                                                <li>No aplican a la membres&iacute;a del cliente</li>
+                                                <li>No hay inventario</li>
+                                        </ul>
+                                        <a href="[% ttf.uri( c => 'ventas', m => 'default' ) %]" class="btn btn-primary btn-sm">
+                                                <i class="fe fe-shopping-cart mr-2"></i>
+                                                Administraci&oacute;n de productos
+                                        </a>
+                                </div>
+                        </div>
+                [% END %]
+        </div>
+
+        <div class="card [% IF data.discounts.size > 5 %]card-collapsed[% END %] CARD-CHARGES">
+                <div class="card-status bg-yellow"></div>
+                <div class="card-header">
+                        <h4 class="card-title">
+                                <span class="badge badge-warning">[% data.discounts.size %]</span>
+                                &nbsp;
+                                <a href="[% ttf.uri( c => 'descuentos', m => 'default' ) %]">Promociones</a>
+                        </h4>
+                        <div class="card-options">
+                                <a href="javascript:;" class="card-options-collapse" data-toggle="card-collapse"><i class="fe fe-chevron-up"></i></a>
+                        </div>
+                </div>
+                [% IF data.discounts.size %]
+                        <table class="table card-table TABLE-CHARGES">
+                                <tbody>
+                                        [% FOREACH disc = data.discounts %]
+                                               <tr>
+                                                       <td width="1">
+                                                               <a href="javascript:;"
+                                                                        data-charge_id="[% disc.id %]"
+                                                                        data-type_code="DISCOUNT"
+                                                                        data-month_duration="[% disc.discount_month_duration %]"
+                                                                        data-next_months="[% disc.display_next_months %]"
+                                                                        class="[% FOREACH ym = disc.next_months %]BTN-MEMBERSHIP-[% ym.year %]-[% ttf.int(ym.month) %] [% END %]
+                                                                        BTN-ADD-TO-CART btn btn-sm btn-outline-success">
+                                                                       <i class="fa fa-plus"></i>
+                                                               </a>
+                                                       </td>
+                                                       <td class="table-search-col" id="DISCOUNT-DESCRIPTION-[% disc.id %]">
+                                                               <a class="text-inherit" href="[% ttf.uri( c => 'descuentos', m => 'ver', id => disc.id )%]">
+                                                                       [% disc.name %]
+                                                               </a>
+                                                               <br>
+                                                               <small class="text-muted">[% disc.display_month_duration %]</small>
+                                                               [% ttf.tip(disc.display_next_months.replace(',', '<br>')) %]
+                                                       </td>
+                                                       <td class="text-right" id="DISCOUNT-AMOUNT-[% disc.id %]">$[% ttf.commify(disc.amount) %]</td>
+                                               </tr>
+                                       [% END %]
+                                </tbody>
+                        </table>
+                [% ELSE %]
+                        <div class="card-body">
+                                <div class="alert alert-info" role="alert">
+                                        <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                        <b>No se han encontrado descuentos que apliquen a la membres&iacute;a del cliente.</b>
+                                        <br><br>
+                                        <a href="[% ttf.uri( c => 'descuentos', m => 'default' ) %]" class="btn btn-primary btn-sm">
+                                                <i class="fe fe-arrow-down mr-2"></i>
+                                                Administrar descuentos
+                                        </a>
+                                </div>
+                        </div>
+                [% END %]
+        </div>
+
+</div>
+
+<div class="col-sm-8">
+
+        <div class="page-header" style="margin-top:10px;margin-bottom:18px;">
+                <h1 class="page-title">
+                        <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => p.id ) %]">
+                                [% data.user.display_name %]
+                        </a>
+                </h1>
+        </div>
+
+        <div class="card" id="DIV-ADD-CHARGE" style="display:none">
+                [% INCLUDE 'include/ventas/add-charge.tt' %]
+        </div>
+
+        <div class="card" id="DIV-ADD-PREPAY" style="display:none">
+                [% INCLUDE 'include/ventas/add-prepay.tt' %]
+        </div>
+
+        <div class="card" id="DIV-SHOPPING-CART" style="display:none">
+                <div class="card-status bg-blue"></div>
+                <div class="card-header">
+                        <h4 class="card-title">Pagos por realizar</h4>
+                </div>
+                <div class="card-alert alert mb-0" id="FORM-STATUS-SHOPPING_CART" style="display:none"></div>
+                <table class="table card-table TABLE-SHOPPING-CART"></table>
+                <div class="card-footer text-right">
+                        [% IF data.balance.balance > 0 %]
+                                [% INCLUDE 'include/ventas/pos-debit.tt' %]
+                        [% ELSE %]
+                                [% INCLUDE 'include/ventas/pos-simple.tt' %]
+                        [% END %]
+                </div>
+        </div>
+</div>
+
+[% INCLUDE include/footer.tt %]

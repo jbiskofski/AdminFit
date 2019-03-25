@@ -1,0 +1,332 @@
+[% INCLUDE include/header/main.tt %]
+
+[% IF data.user.is_client %]
+        [% INCLUDE include/clientes/menu.tt %]
+[% ELSE %]
+        [% INCLUDE include/usuarios/menu.tt %]
+[% END %]
+
+<div class="col">
+        <div class="card">
+                <div class="card-status bg-blue"></div>
+                <div class="card-header">
+                        <h3 class="card-title">
+                                [% data.user.display_name %]
+                                &raquo;
+                                [% IF p.year && p.month %]
+                                        [% data.display_month %] / [% p.year %]
+                                [% ELSIF p.date %]
+                                        [% p.date %]
+                                [% ELSE %]
+                                        Estado de cuenta
+                                [% END %]
+                        </h3>
+                </div>
+                <div class="table-responsive push">
+                        <table class="table card-table">
+                                <tbody>
+
+                                        <tr class="header">
+                                                <th colspan="2" class="text-right">Cobro</th>
+                                                <th class="text-right">Pagos</th>
+                                                <th class="text-right">Restante</th>
+                                        </tr>
+
+                                        [% FOREACH mon = data.statement.months %]
+
+                                                <tr class="table-active">
+                                                        <td colspan="3">
+                                                                <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => p.id, year => mon.year, month => mon.month ) %]" class="text-inherit no-underline">
+                                                                        [% IF mon.remaining_amount <= 0 %]
+                                                                                [% ttf.tip('Sin adeudos', icon => 'check-circle', color => 'green') %]
+                                                                        [% ELSE %]
+                                                                                [% ttf.tip('Adeudos pendientes', icon => 'alert-circle', color => 'danger') %]
+                                                                        [% END %]
+                                                                        [% mon.year %] : [% mon.display_month %]
+                                                                </a>
+                                                        </td>
+                                                        <td class="text-right">
+                                                                [% UNLESS p.month %]
+                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => p.id, year => mon.year, month => mon.month ) %]" class="text-inherit no-underline">
+                                                                                [% ttf.tip('Ver detalles del mes' icon => 'zoom-in') %]
+                                                                                [% IF mon.remaining_amount %]
+                                                                                        $[% ttf.commify(mon.remaining_amount) %]
+                                                                                [% ELSE %]
+                                                                                        <span class="amount-paid">$0.00</span>
+                                                                                [% END %]
+                                                                        </a>
+                                                                [% END %]
+                                                        </td>
+                                                </tr>
+
+                                                [% FOREACH ch = mon.charges %]
+                                                        <tr>
+                                                                <td>
+                                                                        [% IF ch.is_cancelled %]
+                                                                                [% ttf.tip('Cancelado', icon => 'alert-circle', color => 'danger') %]
+                                                                        [% ELSIF ch.is_prepayment %]
+                                                                                [% ttf.tip('Prepago', icon => 'arrow-up-circle', color => 'success') %]
+                                                                        [% ELSE %]
+                                                                                [% ttf.gr(ch.remaining_amount <= 0) %]
+                                                                        [% END %]
+                                                                        [% IF ( ch.type_code == 'I' || ch.type_code == 'P' ) && ch.sales.size > 1 %]
+                                                                                <div class="item-action dropdown">
+                                                                                        <a href="javascript:;" data-toggle="dropdown" class="[% IF ch.is_cancelled %]text-danger amount-paid[% ELSE %]text-inherit[% END %]" aria-expanded="false">
+                                                                                                [% ch.concept.concept %]
+                                                                                        </a>
+                                                                                        <div class="dropdown-menu dropdown-menu-right" x-placement="bottom-end">
+                                                                                                [% FOREACH sale = ch.sales %]
+                                                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'cobro', id => sale.id ) %]" class="dropdown-item">
+                                                                                                                <i class="dropdown-icon fe fe-shopping-cart"></i>
+                                                                                                                [% sale.creation_date_time %]
+                                                                                                                &nbsp;&nbsp;-&nbsp;&nbsp;
+                                                                                                                [% IF sale.is_cancelled %]
+                                                                                                                        <span class="text-red amount-paid">$[% ttf.commify(sale.remaining_amount) %]</span>
+                                                                                                                [% ELSIF sale.remaining_amount > 0 %]
+                                                                                                                        <span class="text-red">$[% ttf.commify(sale.remaining_amount) %]</span>
+                                                                                                                [% ELSE %]
+                                                                                                                        <span style="text-decoration:line-through;color:#9aa0ac;">$[% ttf.commify(sale.paid + sale.debit_paid) %]</span>
+                                                                                                                [% END %]
+                                                                                                        </a>
+                                                                                                [% END %]
+                                                                                        </div>
+                                                                                </div>
+                                                                        [% ELSE %]
+                                                                                <a class="[% IF ch.is_cancelled %]text-danger amount-paid[% ELSE %]text-inherit[% END %]" href="[% ttf.uri( c => 'finanzas', m => 'cobro', id => ch.id ) %]">
+                                                                                        [% ch.concept.concept %]
+                                                                                </a>
+                                                                        [% END %]
+                                                                        [% IF ch.is_cancelled %]
+                                                                                <br>
+                                                                                <div class="tag tag-danger">
+                                                                                        Cancelado
+                                                                                        <span class="tag-addon"><i class="fe fe-x"></i></span>
+                                                                                </div>
+                                                                        [% END %]
+
+                                                                        [% IF ch.is_prepayment %]
+                                                                                <br>
+                                                                                <div class="tag tag-green">
+                                                                                        Prepago
+                                                                                        <span class="tag-addon"><i class="fe fe-arrow-up"></i></span>
+                                                                                </div>
+                                                                        [% END %]
+
+                                                                        <br>
+                                                                        <small class="text-muted">
+                                                                                [% IF ( ch.type_code == 'I' || ch.type_code == 'P' ) && ch.sales.size > 1 %]
+                                                                                        [% ch.sales.size %] Ventas
+                                                                                [% ELSE %]
+                                                                                        [% ttf.date(ch.creation_date_time) %]
+                                                                                [% END %]
+                                                                                <br>
+                                                                                [% ch.concept.details %]
+                                                                                [% IF ch.type_code == 'M'
+                                                                                        && ch.responsible_client_id
+                                                                                        && ch.responsible_client_id != ch.client_id %]
+                                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => ch.responsible_client_id ) %]" class="text-inherit">
+                                                                                                ( Responsable de pago : [% ch.concept.display_responsible_client_name %] )
+                                                                                        </a>
+                                                                                [% END %]
+                                                                        </small>
+                                                                        [% IF ch.item_type_code == 'VISITS' %]
+                                                                                <a href="[% ttf.uri( c => 'visitas', m => 'uso-de-cliente', id => ch.id ) %]" class="btn btn-sm btn-secondary">
+                                                                                        <i class="fe fe-star"></i>
+                                                                                        Ver uso de visitas
+                                                                                        [% IF ch.visits_expired && !ch.is_cancelled %]
+                                                                                                <small class="text-muted text-red">
+                                                                                                        Expirado
+                                                                                                </small>
+                                                                                        [% ELSIF ch.visit_number > 0 %]
+                                                                                                <small class="text-muted [% IF !ch.visits_remaining %]amount-paid text-red[% END %]">
+                                                                                                        ( [% ch.visits_used %] de [% ch.visit_number %] )
+                                                                                                </small>
+                                                                                        [% END %]
+                                                                                </a>
+                                                                        [% END %]
+                                                                </td>
+                                                                <td class="text-right">
+                                                                        $[% ttf.commify(ch.amount) %]
+                                                                        [% IF ch.discounts %]
+                                                                                <small class="d-block text-muted">
+                                                                                        [% ttf.tip(ch.display_discounts, dont_escape => 1 ) %]
+                                                                                        [% ch.discounts.size %]
+                                                                                        [% ttf.plural(ch.discounts.size, 'Descuento', 'Descuentos') %]
+                                                                                        <br>
+                                                                                        $[% ttf.commify(ch.original_amount) %]
+                                                                                        -
+                                                                                        $[% ttf.commify(ch.discount_amount) %]
+                                                                                        <br>
+                                                                                </small>
+                                                                        [% END %]
+                                                                </td>
+                                                                <td class="text-right">
+                                                                        [% IF ch.debit_paid > 0 %]
+                                                                                $[% ttf.commify(ch.debit_paid) %]
+                                                                                [% ttf.tip('Pago con saldo a favor', icon => 'arrow-up-circle', color => 'green') %]
+                                                                                <br>
+                                                                                [% IF ch.paid > 0 %]
+                                                                                        $[% ttf.commify(ch.paid) %]
+                                                                                        [% ttf.tip('Pago', icon => 'dollar-sign', color => 'green') %]
+                                                                                        <br>
+                                                                                [% END %]
+                                                                        [% ELSE %]
+                                                                                $[% ttf.commify(ch.paid || 0) %]
+                                                                                <br>
+                                                                        [% END %]
+                                                                        [% IF ch.payments.size > 0 %]
+                                                                                <small class="d-block text-muted" style="margin-right:4px">
+                                                                                        [% ttf.tip(ch.display_payments, dont_escape => 1) %]
+                                                                                        [% ch.payments.size %]
+                                                                                        [% ttf.plural(ch.payments.size, 'Pago', 'Pagos') %]
+                                                                                </small>
+                                                                        [% END %]
+                                                                </td>
+                                                                <td [% IF !ch.remaining_amount %]style="text-decoration:line-through;color:#9aa0ac;"[% END %] class="text-right">
+                                                                        $[% ttf.commify(ch.remaining_amount) %]
+                                                                </td>
+                                                        </tr>
+                                                [% END %]
+                                        [% END %]
+                                </tbody>
+                        </table>
+                </div>
+        </div>
+</div>
+
+<div class="col-sm-3">
+
+        <div class="card p-3">
+                <div class="d-flex">
+                        [% IF data.statement.total.remaining_amount %]
+                                <span class="stamp stamp-md bg-danger mr-3">
+                                        <i class="fe fe-alert-circle"></i>
+                                </span>
+                        [% ELSE %]
+                                <span class="stamp stamp-md bg-success mr-3">
+                                        <i class="fe fe-check"></i>
+                                </span>
+                        [% END %]
+                        <div>
+                                <h4 class="m-0">
+                                        $[% ttf.commify(data.statement.total.remaining_amount || 0) %]
+                                </h4>
+                                <small class="text-muted">Adeudos</small>
+                        </div>
+                </div>
+                <div style="margin-top:.5rem">
+                        <a href="[% ttf.uri( c => 'ventas', m => 'punto-de-venta', id => p.id ) %]" class="btn btn-secondary btn-sm">Ingreso de pagos</a>
+                        <a href="[% ttf.uri( c => 'ventas', m => 'punto-de-venta', id => p.id, adeudo => 'nuevo' ) %]" class="btn btn-secondary btn-sm" style="margin-top:.5rem">Agregar adeudo nuevo</a>
+                </div>
+        </div>
+
+        [% IF data.statement.balance.balance > 0 %]
+                <div class="card p-3">
+                        <div class="d-flex align-items-center">
+                                <span class="stamp stamp-md bg-success mr-3">
+                                        <i class="fe fe-arrow-up-circle"></i>
+                                </span>
+                                <div>
+                                        <h4 class="m-0">
+                                                $[% ttf.commify(data.statement.balance.balance || 0) %]
+                                        </h4>
+                                        <small class="text-muted">Saldo a favor</small>
+                                </div>
+                        </div>
+                </div>
+        [% END %]
+
+        [% IF data.user.is_client %]
+                <div class="card p-3">
+                        <div class="d-flex">
+                                <span class="stamp stamp-md bg-yellow mr-3">
+                                        <i class="fe fe-user"></i>
+                                </span>
+                                <div>
+                                        <h4 class="m-0">Membres&iacute;a</h4>
+                                        <small class="text-muted">
+                                                [% IF data.membership.type_code == 'G' %]
+                                                        <a href="[% ttf.uri( c => 'membresias', m => 'grupo', id => data.membership.membership_group_id ) %]" class="text-inherit">
+                                                                [% data.membership.name %]
+                                                        </a>
+                                                        <br>
+                                                        [% IF data.membership.is_responsible_for_group_membership %]
+                                                                <i class="fe fe-dollar-sign"></i>&nbsp;Responsable de pago
+                                                        [% ELSE %]
+                                                                <i class="fe fe-plus"></i>&nbsp;Dependiente
+                                                        [% END %]
+                                                [% ELSE %]
+                                                        <a href="[% ttf.uri( c => 'membresias', m => 'ver', id => data.membership.membership_id ) %]" class="text-inherit">
+                                                                [% data.membership.name %]
+                                                        </a>
+                                                [% END %]
+                                                <br>
+                                                Precio : $[% ttf.commify(data.membership.amount || 0) %]
+                                                <br>
+                                                D&iacute;a de renovaci&oacute;n : [% data.membership.renewal_day %]
+                                        </small>
+
+                                </div>
+                        </div>
+                </div>
+
+                [% IF data.membership.type_code == 'G' && data.membership.is_responsible_for_group_membership %]
+                        <div class="card p-3">
+                                <div class="d-flex">
+                                        <span class="stamp stamp-md bg-purple mr-3">
+                                                <i class="fe fe-users"></i>
+                                        </span>
+                                        <div>
+                                                <h4 class="m-0">Dependientes</h4>
+                                                <small class="text-muted">
+                                                        [% IF data.membership.dependents %]
+                                                                [% FOREACH dep = data.membership.dependents %]
+                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => dep.id ) %]" class="text-inherit">
+                                                                                <i class="fe fe-user"></i>
+                                                                                [% dep.display_name %]
+                                                                        </a>
+                                                                        <br>
+                                                                [% END %]
+                                                        [% ELSE %]
+                                                                <i class="fe fe-alert-circle"></i>
+                                                                No se han agregado dependientes.
+                                                        [% END %]
+                                                </small>
+                                        </div>
+                                </div>
+                        </div>
+                [% END %]
+
+                <div class="card p-3">
+                        <div class="d-flex align-items-center">
+                                <span class="stamp stamp-md bg-blue mr-3">
+                                        <i class="fe fe-calendar"></i>
+                                </span>
+                                <div>
+                                        <h4 class="m-0">
+                                                [% data.statement.months.size || 0 %]
+                                        </h4>
+                                        <small class="text-muted">[% ttf.plural(data.statement.months.size, 'Mensualidad', 'Mensualidades') %]</small>
+                                </div>
+                        </div>
+                </div>
+
+        [% END %]
+
+        <div class="card p-3">
+                <div class="d-flex align-items-center">
+                        <span class="stamp stamp-md bg-secondary mr-3">
+                                <i class="fe fe-dollar-sign"></i>
+                        </span>
+                        <div>
+                                <h4 class="m-0">
+                                        $[% ttf.commify(data.statement.total.paid || 0) %]
+                                </h4>
+                                <small class="text-muted">Ingresos</small>
+                        </div>
+                </div>
+        </div>
+
+</div>
+
+[% INCLUDE include/footer.tt %]

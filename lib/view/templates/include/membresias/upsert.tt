@@ -1,0 +1,222 @@
+<script>
+require(['jquery'], function($) {
+        $(document).ready( function() {
+
+                $( "input[name='type_code']" ).change( function() {
+                        if ( $(this).val() === 'G' ) {
+                                $('.DIV-GROUP-OPTIONS').show();
+                        }
+                        else {
+                                $('.DIV-GROUP-OPTIONS').hide();
+                        }
+                });
+
+                $("input[name=BOOL-has_timeframe_limitations]").change( function() {
+                        var CHECKED = $(this).prop("checked");
+                        if ( CHECKED ) {
+                                $("#DIV-TIMEFRAME-LIMITS").fadeIn("slow");
+                        }
+                        else {
+                                $("#DIV-TIMEFRAME-LIMITS").hide();
+                        }
+                });
+
+                $( "input[name='name']" ).focusout( function() {
+                        var INPUT = this;
+                        $(INPUT).hide().show();
+                        var NAME = $(INPUT).val();
+                        if ( !NAME.length ) return;
+                        var URI = "[% ttf.uri( c => 'membresias', m => 'x_check_name_availability' ) %]?name=" + NAME;
+                        $.getJSON(URI, function(RESPONSE) {
+                                if ( RESPONSE.available === 1 ) {
+                                        __ADMINFIT__.display_success('Nombre de membres&iacute;a disponible.', INPUT);
+                                }
+                                else {
+                                        __ADMINFIT__.display_error('Nombre de membres&iacute;a indisponible.', INPUT);
+                                }
+                        });
+                });
+
+        });
+});
+
+function check_group_options() {
+        [% IF data.membership %]return true;[% END %]
+        if ( $("input[name='type_code']:checked").val() === 'I' ) return true;
+        if ( parseInt( $("input[name=group_maximum_members]").val() ) >= 2 ) return true;
+        return false;
+}
+
+</script>
+
+<form class="card" name="default" action="[% ttf.uri( c => 'membresias', m => 'upsert-do' ) %]" method="post">
+        <div class="card-status bg-blue"></div>
+        <div class="card-header">
+                <h3 class="card-title">
+                        [% IF data.membership %]
+                                <input type="hidden" name="id" value="[% p.id %]">
+                                [% data.membership.name %] &raquo; Actualizar
+                        [% ELSE %]
+                                Agregar tipo de membres&iacute;a
+                        [% END %]
+                </h3>
+        </div>
+        <div class="card-alert alert mb-0" id="FORM-STATUS-default" style="display:none"></div>
+        <div class="card-body">
+                <div class="row">
+                        <div class="col-sm-6">
+                                <div class="form-group">
+                                        <label class="form-label">Nombre</label>
+                                        <input type="text" [% ttf.disabled(data.membership.is_permanent) %] name="name" class="form-control" placeholder="Ejemplo : Mensual" value="[% data.membership.name %]">
+                                </div>
+                        </div>
+                        <div class="col-sm-6">
+                                <div class="form-group">
+                                        <label class="form-label">Precio</label>
+                                        <div class="input-group">
+                                                <span class="input-group-prepend">
+                                                        <span class="input-group-text">$</span>
+                                                </span>
+                                                <input [% ttf.disabled(data.membership.is_permanent) %] type="text" name="amount" class="form-control text-right" data-mask="000,000,000.00" data-mask-reverse="true" maxlength="8" placeholder="$1,000.00" value="[% data.membership.amount %]">
+                                        </div>
+                                </div>
+                        </div>
+                        <div class="col-sm-6">
+                                <div class="form-group">
+                                        [% IF data.membership %]
+                                                <label class="form-label">Detalles de membres&iacute;a</label>
+                                                [% data.membership.display_type %]
+                                                [% IF data.membership.type_code == 'G' %]
+                                                        <div class="small text-muted">
+                                                                [% data.membership.display_group_requirements %]
+                                                        </div>
+                                                [% END %]
+                                        [% ELSE %]
+                                                <label class="form-label">Individual o grupal</label>
+                                                <div class="selectgroup w-100">
+                                                        <label class="selectgroup-item">
+                                                                <input [% ttf.disabled(data.membership.is_permanent) %] type="radio" name="type_code" value="I" class="selectgroup-input" checked="" [% IF data.membership %]disabled="disabled"[% END %]>
+                                                                <span class="selectgroup-button">Individual</span>
+                                                        </label>
+                                                        <label class="selectgroup-item">
+                                                                <input [% ttf.disabled(data.membership.is_permanent) %] type="radio" name="type_code" value="G" class="selectgroup-input" [% IF data.membership %]disabled="disabled"[% END %]>
+                                                                <span class="selectgroup-button">Grupal</span>
+                                                        </label>
+                                                </div>
+                                        [% END %]
+                                </div>
+                        </div>
+                        <div class="col-sm-6 DIV-GROUP-OPTIONS" style="display:none">
+                                <div class="form-group DIV-GROUP-OPTIONS" style="display:none">
+                                        <label class="form-label text-right">
+                                                N&uacute;mero de clientes en el grupo
+                                                <span class="text-red">*</span>
+                                        </label>
+                                        <input [% ttf.disabled(data.membership.is_permanent) %] type="number" name="group_maximum_members" class="form-control text-right" min="1" max="50" step"1" value="2">
+                                        <small class="d-block item-except text-sm text-muted h-1x text-right">
+                                                &iquest; Para cuantos clientes es esta membres&iacute;a ?
+                                                <br>
+                                                ( Mayor igual a dos )
+                                        </small>
+                                </div>
+                        </div>
+                        <div class="col-sm-6">
+                                <div class="form-group">
+                                        <label class="form-label">Notas</label>
+                                        <div class="input-group">
+                                                <textarea [% ttf.disabled(data.membership.is_permanent) %] name="notes" rows="3" class="form-control" placeholder="Notas">[% data.membership.notes %]</textarea>
+                                        </div>
+                                </div>
+                                [% IF data.membership.is_default %]
+                                        <div class="form-group">
+                                                <div class="alert alert-primary" role="alert">
+                                                        <i class="fe fe-message-circle mr-2" aria-hidden="true"></i>
+                                                        <b>No puedes desactivar la membres&iacute;a principal.</b>
+                                                        <br>
+                                                        Si quieres hacer eso, designa otra membres&iacute;a como principal primero.
+                                                </div>
+                                        </div>
+                                [% END %]
+                        </div>
+                        <div class="col-sm-12">
+                                <div class="form-group">
+                                        <label class="custom-switch">
+                                                <input type="checkbox" name="BOOL-has_timeframe_limitations" class="custom-switch-input" [% ttf.checked(data.membership.has_timeframe_limitations) %] [% ttf.disabled(data.membership.is_permanent) %]>
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Especificar limitaciones de horario</span>
+                                        </label>
+                                </div>
+                                <div id="DIV-TIMEFRAME-LIMITS"  [% UNLESS data.membership.has_timeframe_limitations %]style="display:none"[% END %]>
+                                        <div class="form-group">
+                                                <div class="form-label">D&iacute;as de la semana</div>
+                                                <div>
+                                                        <label class="custom-control custom-checkbox custom-control-inline">
+                                                                <input type="checkbox" class="custom-control-input" name="BOOL-TLIM_DOW_0" [% ttf.checked(data.membership.has_timeframe_limitations && data.membership.limit_dows.0) %]>
+                                                                <span class="custom-control-label">Domingo</span>
+                                                        </label>
+                                                        <label class="custom-control custom-checkbox custom-control-inline">
+                                                                <input type="checkbox" class="custom-control-input" name="BOOL-TLIM_DOW_1" [% ttf.checked(data.membership.has_timeframe_limitations && data.membership.limit_dows.1) %]>
+                                                                <span class="custom-control-label">Lunes</span>
+                                                        </label>
+                                                        <label class="custom-control custom-checkbox custom-control-inline">
+                                                                <input type="checkbox" class="custom-control-input" name="BOOL-TLIM_DOW_2" [% ttf.checked(data.membership.has_timeframe_limitations && data.membership.limit_dows.2) %]>
+                                                                <span class="custom-control-label">Martes</span>
+                                                        </label>
+                                                        <label class="custom-control custom-checkbox custom-control-inline">
+                                                                <input type="checkbox" class="custom-control-input" name="BOOL-TLIM_DOW_3" [% ttf.checked(data.membership.has_timeframe_limitations && data.membership.limit_dows.3) %]>
+                                                                <span class="custom-control-label">Mi&eacute;rcoles</span>
+                                                        </label>
+                                                        <label class="custom-control custom-checkbox custom-control-inline">
+                                                                <input type="checkbox" class="custom-control-input" name="BOOL-TLIM_DOW_4" [% ttf.checked(data.membership.has_timeframe_limitations && data.membership.limit_dows.4) %]>
+                                                                <span class="custom-control-label">Jueves</span>
+                                                        </label>
+                                                        <label class="custom-control custom-checkbox custom-control-inline">
+                                                                <input type="checkbox" class="custom-control-input" name="BOOL-TLIM_DOW_5" [% ttf.checked(data.membership.has_timeframe_limitations && data.membership.limit_dows.5) %]>
+                                                                <span class="custom-control-label">Viernes</span>
+                                                        </label>
+                                                        <label class="custom-control custom-checkbox custom-control-inline">
+                                                                <input type="checkbox" class="custom-control-input" name="BOOL-TLIM_DOW_6" [% ttf.checked(data.membership.has_timeframe_limitations && data.membership.limit_dows.6) %]>
+                                                                <span class="custom-control-label">S&aacute;bado</span>
+                                                        </label>
+                                                </div>
+                                                <br>
+                                                <div class="form-label">Horas</div>
+                                                <div>
+                                                        [% FOREACH hh = [ 0 .. 23 ] %]
+                                                                <label class="custom-control custom-checkbox custom-control-inline">
+                                                                        <input type="checkbox" class="custom-control-input" name="BOOL-TLIM_HOUR_[% hh %]" [% ttf.checked(data.membership.has_timeframe_limitations && data.membership.limit_hours.${hh}) %]>
+                                                                        <span class="custom-control-label">[% hh FILTER format('%02d') %]:00</span>
+                                                                </label>
+                                                        [% END %]
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+        </div>
+        <div class="card-footer text-right">
+                <div class="d-flex">
+                        [% IF data.membership && !data.membership.is_permament && !data.membership.is_default %]
+                                <label class="custom-switch">
+                                        <input type="checkbox"
+                                        data-switch_uri="[% ttf.uri( c => 'membresias', m => 'switch-active-do', id => p.id ) %]"
+                                        class="ACTIVE-SWITCH custom-switch-input"
+                                        [% ttf.disabled(data.membership.is_default || data.membership.is_permanent) %]
+                                        [% ttf.checked(data.membership.active ) %]>
+                                        <span class="custom-switch-indicator"></span>
+                                        <span class="custom-switch-description [% IF data.membership.is_default || data.membership.is_permanent %]text-disabled[% END %]">
+                                                [% IF data.membership.active %]
+                                                        Deshabilitar
+                                                [% ELSE %]
+                                                        Reactivar
+                                                [% END %]
+                                        </span>
+                                </label>
+                        [% END %]
+                        <button type="submit" [% ttf.disabled(data.membership.is_permanent) %] class="btn btn-primary ml-auto">
+                                [% IF data.membership %]Guardar[% ELSE %]Agregar[% END %]
+                        </button>
+                </div>
+        </div>
+</form>
+[% v.pre %]

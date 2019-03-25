@@ -1,0 +1,577 @@
+[% INCLUDE include/header/main.tt %]
+
+[% UNLESS data.hide_filters %]
+        <script>
+        require(['jquery','standard'], function($, __ADMINFIT__) {
+
+                $(document).ready( function() {
+
+                        $("input[name=RADIO-CLIENT-FILTERS]").change( function() {
+                                _update_interface();
+                        });
+
+                        $("#CB-SD-MEMBERSHIPS").change( function() {
+                            $(".SELECT-MEMBERSHIP-FILTER").prop("checked", this.checked);
+                            _update_interface();
+                        });
+
+                        $(".SELECT-MEMBERSHIP-FILTER").change( function() {
+                            _update_interface();
+                        });
+
+                        $("input[name=RADIO-CHART]").change( function() {
+                                if ( this.value === 'CLIENTS' ) {
+                                        $("#DIV-MEMBERSHIP-INCOME").hide();
+                                        $("#DIV-MEMBERSHIP-CLIENTS").fadeIn();
+                                }
+                                else {
+                                        $("#DIV-MEMBERSHIP-CLIENTS").hide();
+                                        $("#DIV-MEMBERSHIP-INCOME").fadeIn();
+                                }
+                        });
+
+                        [% IF p.filter == 'membresias-pendientes' %]
+                                $("input[name=RADIO-CLIENT-FILTERS]").filter("[value=PENDING-MEMBERSHIPS]").prop("checked", true);
+                        [% ELSIF p.filter == 'membresias-pagadas' %]
+                                $("input[name=RADIO-CLIENT-FILTERS]").filter("[value=PAID-MEMBERSHIPS]").prop("checked", true);
+                        [% ELSIF p.filter == 'adeudos-pendientes' %]
+                                $("input[name=RADIO-CLIENT-FILTERS]").filter("[value=PENDING-DEBTS]").prop("checked", true);
+                        [% ELSIF p.filter == 'renovaciones-proximas' %]
+                                $("input[name=RADIO-CLIENT-FILTERS]").filter("[value=UPCOMING-RENEWALS]").prop("checked", true);
+                        [% END %]
+
+                        _update_interface();
+
+                });
+
+                function _update_interface() {
+
+                        var REPORT_TYPE   = $("input[name=RADIO-CLIENT-FILTERS]:checked").val();
+
+                        $("table#table-clients tr").show().removeClass("TR-HIDE-REGARDLESS");
+
+                        var REPORT_TYPE_SELECTOR = "";
+
+                        if ( REPORT_TYPE !== "ALL" ) {
+                                REPORT_TYPE_SELECTOR = ".TR-" + REPORT_TYPE;
+                                $("table#table-clients tr").not( REPORT_TYPE_SELECTOR ).hide().addClass("TR-HIDE-REGARDLESS");
+                        }
+
+                        $(".SELECT-MEMBERSHIP-FILTER").each( function(i,cb) {
+                            if ( this.checked ) return true;
+                            $("table#table-clients tr.TR-MEMBERSHIP-" + this.value).hide();
+                        });
+
+                        _update_client_index();
+                        _update_totals();
+
+                }
+
+                function _update_client_index() {
+
+                        $("table#table-clients tr:visible td.TD-CLIENT-INDEX").each( function(i, oo) {
+                                $(oo).html("<strong>" + ( i + 1 ) + ".</strong>");
+                        });
+
+                }
+
+                function _update_totals() {
+
+                        var TOTAL_AMOUNT = 0;
+                        $("table#table-clients tr:visible div.DIV-CLIENT-AMOUNT").each( function(i, oo) {
+                                AMOUNT = $(oo).html().replace(/[^0-9.]/g, '');
+                                TOTAL_AMOUNT += parseFloat(AMOUNT);
+                        });
+
+                        var INCOME = 0;
+
+                        $(".SELECT-MEMBERSHIP-FILTER:checked").each( function(i,cb) {
+                            INCOME += parseFloat( $(this).data("income") );
+                        });
+
+                        $("#SPAN-TOTAL-RESULTS-DEBT").html( "$" + __ADMINFIT__.commify( TOTAL_AMOUNT.toFixed(2) ) );
+                        $("#SPAN-TOTAL-RESULTS-INCOME").html( "$" + __ADMINFIT__.commify( INCOME.toFixed(2) ) );
+                        $("#SPAN-TOTAL-RESULTS-USERS").html( $("table#table-clients tr.TR-USERS:visible").size() );
+                }
+
+        });
+        </script>
+
+        <div class="col-sm-5">
+                <div class="card">
+                        <div class="card-status bg-blue"></div>
+                        <div class="card-header">
+                                <h3 class="card-title">
+                                        <a href="[% ttf.uri( c => 'membresias', m => 'default' ) %]" class="text-inherit">
+                                                Membres&iacute;as
+                                        </a>
+                                </h3>
+                                <div class="card-options" style="padding-top:15px">
+                                        <div class="selectgroup selectgroup-pills">
+                                                [% IF data.charts.clients %]
+                                                        <label class="selectgroup-item">
+                                                                <input type="radio" name="RADIO-CHART" value="CLIENTS" class="selectgroup-input" checked="checked" autocomplete="off">
+                                                                <span class="selectgroup-button selectgroup-button-icon">
+                                                                        [% ttf.tip('Clientes', icon => 'users') %]
+                                                                </span>
+                                                        </label>
+                                                [% END %]
+                                                [% IF data.charts.income %]
+                                                        <label class="selectgroup-item">
+                                                                <input type="radio" name="RADIO-CHART" value="INCOME" class="selectgroup-input" autocomplete="off">
+                                                                <span class="selectgroup-button selectgroup-button-icon">
+                                                                        [% ttf.tip('Ingresos', icon => 'dollar-sign') %]
+                                                                </span>
+                                                        </label>
+                                                [% END %]
+                                        </div>
+                                </div>
+                        </div>
+                        <div id="DIV-MEMBERSHIP-CLIENTS" class="card-body">
+                                [% IF data.charts.clients %]
+                                        <div id="DIV-MEMBERSHIPS-CLIENT-CHART" style="height:14rem;max-height:14rem;position:relative;" class="c3"></div>
+                                        [% data.charts.clients %]
+                                [% ELSE %]
+                                        <div style="height:14rem;max-height:14rem">
+                                                <div class="alert alert-info" role="alert">
+                                                        <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                                        <b>No se han agregado membres&iacute;as.</b>
+                                                </div>
+                                        </div>
+                                [% END %]
+                        </div>
+                        <div id="DIV-MEMBERSHIP-INCOME" class="card-body" style="display:none">
+                                [% IF data.charts.income %]
+                                        <div id="DIV-MEMBERSHIPS-INCOME-CHART" style="height:14rem;max-height:14rem;position:relative;" class="c3"></div>
+                                        [% data.charts.income %]
+                                [% ELSE %]
+                                        <div style="height:14rem;max-height:14rem">
+                                                <div class="alert alert-info" role="alert">
+                                                        <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                                        <b>No se han agregado membres&iacute;as.</b>
+                                                </div>
+                                        </div>
+                                [% END %]
+                        </div>
+                </div>
+        </div>
+
+        <div class="col-sm-7" style="min-height:300px">
+
+                <div class="row">
+
+                        <div class="col-sm-6">
+                                <div class="card p-3">
+                                        <div class="d-flex">
+                                                <span class="stamp stamp-md bg-green mr-3">
+                                                        <i class="fe fe-users"></i>
+                                                </span>
+                                                <div>
+                                                        <h4 class="m-0">[% data.totals.clients + data.totals.staff %]</h4>
+                                                        <small class="text-muted">
+                                                                [% ttf.plural(data.clients.size, 'Usuario', 'Usuarios') %]
+                                                        </small>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                                <div class="card p-3">
+                                        <div class="d-flex">
+                                                <span class="stamp stamp-md bg-purple mr-3">
+                                                        <i class="fe fe-users"></i>
+                                                </span>
+                                                <div>
+                                                        <h4 class="m-0">[% data.totals.clients || 0 %]</h4>
+                                                        <small class="text-muted">
+                                                                [% ttf.plural(data.totals.clients, 'Cliente', 'Clientes') %]
+                                                        </small>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                                <div class="card p-3">
+                                        <div class="d-flex">
+                                                <span class="stamp stamp-md bg-blue mr-3">
+                                                        <i class="fe fe-user-check"></i>
+                                                </span>
+                                                <div>
+                                                        <h4 class="m-0">[% data.totals.staff || 0 %]</h4>
+                                                        <small class="text-muted">Staff</small>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+
+
+                        <div class="col-sm-6">
+                                <div class="card p-3">
+                                        <div class="d-flex">
+                                                <span class="stamp stamp-md bg-red-light mr-3">
+                                                        <i class="fe fe-dollar-sign"></i>
+                                                </span>
+                                                <div>
+                                                        <h4 class="m-0">[% data.totals.have_debt || 0 %]</h4>
+                                                        <small class="text-muted">
+                                                                [% ttf.plural(data.totals.have_debt, 'Cliente con adeudo', 'Clientes con adeudos') %]
+                                                        </small>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                                <div class="card p-3">
+                                        <div class="d-flex">
+                                                <span class="stamp stamp-md bg-gray mr-3">
+                                                        <i class="fe fe-clock"></i>
+                                                </span>
+                                                <div>
+                                                        <h4 class="m-0">[% data.totals.inactive + data.deleted_user_count || 0 %]</h4>
+                                                        <small class="text-muted">
+                                                                [% ttf.plural(data.totals.inactive + data.deleted_user_count, 'Usuario inactivo', 'Usuarios inactivos') %]
+                                                        </small>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                                <div class="card p-3">
+                                        <div class="d-flex">
+                                                <span class="stamp stamp-md bg-red mr-3">
+                                                        <i class="fe fe-alert-circle"></i>
+                                                </span>
+                                                <div>
+                                                        <h4 class="m-0">[% data.totals.expired || 0 %]</h4>
+                                                        <small class="text-muted">
+                                                                [% ttf.plural(data.totals.expired, 'Membres&iacute;a expirada', 'Membres&iacute;as expiradas') %]
+                                                        </small>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+
+                        <div class="col-sm-12">
+                                <div style="float:right">
+
+                                        [% IF data.totals.inactive || data.deleted_user_count %]
+                                                <a href="[% ttf.uri( c => 'usuarios', m => 'inactivos' ) %]" class="btn btn-secondary btn-sm">
+                                                        <i class="fe fe-clock mr-2"></i>
+                                                        Ver usuarios inactivos ( [% data.totals.inactive + data.deleted_user_count || 0 %] )
+                                                </a>
+                                                &nbsp;
+                                        [% END %]
+
+                                        <a href="[% ttf.uri( c => 'usuarios', m => 'agregar' ) %]" class="btn btn-primary btn-sm">
+                                                <i class="fe fe-user-check mr-2"></i>
+                                                Agregar staff
+                                        </a>
+
+                                        &nbsp;
+
+                                        <a href="[% ttf.uri( c => 'clientes', m => 'agregar' ) %]" class="btn btn-success btn-sm">
+                                                <i class="fe fe-plus mr-2"></i>
+                                                Agregar cliente
+                                        </a>
+                                </div>
+                        </div>
+                </div>
+
+        </div>
+[% END %]
+
+<div class="col-sm-12">
+        <div class="card">
+                <div class="card-status bg-blue"></div>
+                <div class="card-header">
+                        <span class="h3 card-title">Clientes</span>
+                        <div class="card-options" style="padding-top:15px">
+                                <div class="form-group">
+                                        <div class="input-group" style="margin-left:10px;height:28px">
+                                                <span class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                                <i class="fe fe-search mr-1"></i>
+                                                        </span>
+                                                </span>
+                                                <input type="text" data-search_table="table-clients" class="table-search-input form-control" placeholder="Buscar">
+                                                &nbsp;&nbsp;
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+                [% UNLESS data.hide_filters %]
+                    <div class="card-header">
+                        <div class="card-options" style="padding-top:15px">
+                            <div class="form-group">
+                                <label class="custom-control custom-checkbox custom-control-inline">
+                                        <input type="checkbox" id="CB-SD-MEMBERSHIPS" class="custom-control-input" value="[% mm.id %]" data-income="[% mm.income %]" checked="checked">
+                                        <span class="custom-control-label text-gray-dark">
+                                            <b>Seleccionar todas las membresias</b>
+                                            [% ttf.tip('Seleccionar todas las membresias', icon => 'arrow-down-circle') %]
+                                        </span>
+                                </label>
+                                <br>
+                                [% FOREACH mm = data.memberships %]
+                                        <label class="custom-control custom-checkbox custom-control-inline">
+                                                <input type="checkbox" class="custom-control-input SELECT-MEMBERSHIP-FILTER" value="[% mm.id %]" data-income="[% mm.income %]" checked="checked">
+                                                <span class="custom-control-label">
+                                                    [% mm.name %]
+                                                    <span style="font-size:11px">( [% mm.users || 0 %] )</span>
+                                                </span>
+                                        </label>
+                                [% END %]
+                            </div>
+                        </div>
+                    </div>
+                [% END %]
+                [% UNLESS data.hide_filters %]
+                        <div class="card-header">
+                                <span style="margin-right:30px">
+                                        <span id="SPAN-TOTAL-RESULTS-USERS" class="h3 card-title"></span>
+                                        <small class="d-block text-muted">
+                                                Usuarios
+                                        </small>
+                                </span>
+                                <span style="margin-right:30px">
+                                        <span id="SPAN-TOTAL-RESULTS-INCOME" class="h3 card-title"></span>
+                                        <small class="d-block text-muted">
+                                                Ingresos
+                                        </small>
+                                </span>
+                                <span>
+                                        <span id="SPAN-TOTAL-RESULTS-DEBT" class="h3 card-title"></span>
+                                        <small class="d-block text-muted">
+                                                Adeudos
+                                        </small>
+                                </span>
+                                <div class="card-options">
+                                        <div class="form-group" style="margin-bottom:0px !important">
+                                                <div class="selectgroup selectgroup-pills">
+                                                        <label class="selectgroup-item">
+                                                                <input type="radio" class="selectgroup-input" name="RADIO-CLIENT-FILTERS" value="ALL" checked="checked">
+                                                                <span class="selectgroup-button selectgroup-button-icon">
+                                                                        [% ttf.tip('Todos', icon => 'check-square') %]
+                                                                </span>
+                                                        </label>
+                                                        <label class="selectgroup-item">
+                                                                <input type="radio" class="selectgroup-input" name="RADIO-CLIENT-FILTERS" value="PENDING-MEMBERSHIPS">
+                                                                <span class="selectgroup-button selectgroup-button-icon">
+                                                                        [% ttf.tip('Membres&iacute;as pendientes', icon => 'repeat') %]
+                                                                </span>
+                                                        </label>
+                                                        <label class="selectgroup-item">
+                                                                <input type="radio" class="selectgroup-input" name="RADIO-CLIENT-FILTERS" value="PAID-MEMBERSHIPS">
+                                                                <span class="selectgroup-button selectgroup-button-icon">
+                                                                        [% ttf.tip('Membres&iacute;as pagadas', icon => 'check') %]
+                                                                </span>
+                                                        </label>
+                                                        <label class="selectgroup-item">
+                                                                <input type="radio" class="selectgroup-input" name="RADIO-CLIENT-FILTERS" value="PENDING-DEBTS">
+                                                                <span class="selectgroup-button selectgroup-button-icon">
+                                                                        [% ttf.tip('Adeudos pendientes', icon => 'dollar-sign') %]
+                                                                </span>
+                                                        </label>
+                                                        <label class="selectgroup-item">
+                                                                <input type="radio" class="selectgroup-input" name="RADIO-CLIENT-FILTERS" value="UPCOMING-RENEWALS">
+                                                                <span class="selectgroup-button selectgroup-button-icon">
+                                                                        [% ttf.tip('Renovaciones proximas', icon => 'calendar') %]
+                                                                </span>
+                                                        </label>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+                [% END %]
+                <div class="table-responsive">
+                        <table id="table-clients" class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                <thead>
+                                        <tr>
+                                                <th class="w-1">&nbsp;</th>
+                                                <th colspan="2">Nombre</th>
+                                                <th>Membres&iacute;a</th>
+                                                <th class="text-right">Adeudos</th>
+                                        </tr>
+                                </thead>
+                                <tbody>
+                                        [% FOREACH cc = data.clients %]
+
+                                                [% SET TR_CLASSES = [] %]
+
+                                                [% IF cc.is_client && !cc.membership.is_free_membership && !cc.membership.is_visits_membership %]
+
+                                                        [% IF cc.debt.membership.expired %]
+                                                                [% TR_CLASSES.push('TR-PENDING-MEMBERSHIPS') %]
+                                                                [% TR_CLASSES.push('TR-UPCOMING-RENEWALS') %]
+                                                        [% ELSE %]
+                                                                [% TR_CLASSES.push('TR-PAID-MEMBERSHIPS') %]
+                                                        [% END %]
+
+                                                        [% IF cc.debt.membership.days >= -1 && cc.debt.membership.days <= 7 && cc.is_client %]
+                                                                [% TR_CLASSES.push('TR-UPCOMING-RENEWALS') %]
+                                                        [% END %]
+
+                                                [% END %]
+
+                                                [% IF !cc.active %]
+                                                        [% TR_CLASSES.push('TR-MEMBERSHIP-INACTIVE') %]
+                                                [% END %]
+
+                                                [% IF cc.debt.total > 0 %]
+                                                        [% TR_CLASSES.push('TR-PENDING-DEBTS') %]
+                                                [% END %]
+
+                                                [% IF cc.is_admin || cc.is_coach %]
+                                                        [% TR_CLASSES.push('TR-MEMBERSHIP-STAFF') %]
+                                                [% ELSE %]
+                                                        [% TR_CLASSES.push('TR-MEMBERSHIP-' _ cc.membership.membership_id) %]
+                                                [% END %]
+
+                                                <tr class="TR-USERS [% TR_CLASSES.join(' ') %]">
+                                                        <td class="w-1 TD-CLIENT-INDEX">
+                                                                <strong>[% loop.count %].</strong>
+                                                        </td>
+                                                        <td class="w-1">
+                                                                [% ttf.avatar(
+                                                                        id => cc.id,
+                                                                        has_profile_picture => cc.has_profile_picture,
+                                                                        has_picture => cc.has_picture,
+                                                                        name => cc.display_name ) %]
+                                                        </td>
+                                                        <td width="40%" class="table-search-col" >
+                                                                <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => cc.id ) %]"
+                                                                        class="text-inherit"
+                                                                        [% IF !cc.active %]style="text-decoration:line-through;color:gray!important"[% END %]>
+                                                                        [% cc.display_name %]
+                                                                </a>
+                                                                <small class="d-block item-except text-sm text-muted h-1x">
+                                                                        [% IF p.felicidades %]
+                                                                                [% cc.birthday %]
+                                                                                <i class="fe fe-sun text-yellow"></i>
+                                                                                <br>
+                                                                        [% END %]
+                                                                        [% cc.age %] a&ntilde;os
+                                                                </small>
+                                                                [% IF !cc.active %]
+                                                                        <div class="tag tag-gray">
+                                                                                Deshabilitado
+                                                                                <span class="tag-addon"><i class="fe fe-clock"></i></span>
+                                                                        </div>
+                                                                [% END %]
+                                                        </td>
+                                                        <td width="28%">
+                                                                [% IF cc.is_client %]
+                                                                        <a href="[% ttf.uri( c => 'membresias', m => 'ver', id => cc.membership.membership_id ) %]" class="text-inherit">
+                                                                                [% cc.membership.name %]
+                                                                        </a>
+                                                                        <small class="d-block item-except text-sm text-muted h-1x">
+                                                                                [% IF !cc.membership.is_free_membership && !cc.membership.is_visits_membership %]
+                                                                                        $[% ttf.commify(cc.membership.amount) %]
+                                                                                [% END %]
+                                                                                [% IF cc.membership.is_visits_membership %]
+                                                                                        [% IF cc.visits.charge_id && !cc.visits.is_cancelled %]
+                                                                                                [% IF cc.visits.expired %]
+                                                                                                        <i class="fe fe-calendar text-red"></i>
+                                                                                                        <small class="text-muted text-red">
+                                                                                                                Visitas expiradas
+                                                                                                        </small>
+                                                                                                [% ELSIF cc.visits.visits_exhausted %]
+                                                                                                        <i class="fe fe-user-x text-red"></i>
+                                                                                                        <small class="text-muted text-red">&nbsp;Visitas acabadas</small>
+                                                                                                [% ELSE %]
+                                                                                                        <i class="fe fe-star text-green"></i>
+                                                                                                        [% cc.visits.item_name %]
+                                                                                                        <br>
+                                                                                                        <small class="text-muted">
+                                                                                                                ( [% cc.visits.visits_used %] de [% cc.visits.visit_number %] )
+                                                                                                        </small>
+                                                                                                [% END %]
+                                                                                        [% ELSE %]
+                                                                                                <i class="fe fe-x text-red"></i>
+                                                                                                <small class="text-muted text-red">
+                                                                                                        Sin paquete de visitas
+                                                                                                </small>
+                                                                                        [% END %]
+                                                                                [% END %]
+                                                                                <br>
+                                                                                [% IF cc.membership.type_code == 'G' %]
+                                                                                        <i class="fe fe-users"></i>
+                                                                                        <a href="[% ttf.uri( c => 'membresias', m => 'grupo', id => cc.membership.membership_group_id ) %]" class="text-inherit">
+                                                                                                Membres&iacute;a grupal
+                                                                                        </a>
+                                                                                        <br>
+                                                                                        [% IF cc.membership.is_responsible_for_group_membership %]
+                                                                                                [% IF cc.membership.dependents %]
+                                                                                                        [% SET TIP_TEXT = '' %]
+                                                                                                        [% FOREACH dep = cc.membership.dependents %][% TIP_TEXT = TIP_TEXT _ "<i class='fe fe-user'></i> ${dep.display_name}<br>" %][% END %]
+                                                                                                        [% ttf.tip(TIP_TEXT) %]
+                                                                                                [% ELSE %]
+                                                                                                        [% ttf.tip('No se han agregado dependientes.', icon => 'alert-circle') %]
+                                                                                                [% END %]
+                                                                                                <span>
+                                                                                                        <a href="[% ttf.uri( c => 'membresias', m => 'grupo', id => cc.membership.membership_group_id ) %]" class="text-inherit">
+                                                                                                                [% cc.membership.dependents.size || 0 %]
+                                                                                                                [% ttf.plural(cc.membership.dependents.size, 'Dependiente', 'Dependientes') %]
+                                                                                                        </a>
+                                                                                                </span>
+                                                                                        [% ELSE %]
+                                                                                                [% ttf.tip('Responsable de pago de membres&iacute;a :<br>' _ cc.membership.display_responsible_client_name, icon => 'plus-circle') %]
+                                                                                                Dependiente de grupo
+                                                                                        [% END %]
+                                                                                [% END %]
+                                                                        </small>
+                                                                [% ELSE %]
+                                                                        <div class="tag tag-blue">
+                                                                                Staff
+                                                                                <span class="tag-addon"><i class="fe fe-tag"></i></span>
+                                                                        </div>
+                                                                [% END %]
+                                                        </td>
+                                                        <td style="position:relative" width="30%">
+                                                                <div class="text-right" style="font-size:14px;height:65px">
+                                                                        [% IF cc.debt.total > 0 %]
+                                                                                <div class="DIV-CLIENT-AMOUNT text-danger">
+                                                                                        $[% ttf.commify(cc.debt.total || 0) %]
+                                                                                </div>
+                                                                        [% ELSE %]
+                                                                                <div class="DIV-CLIENT-AMOUNT text-green">
+                                                                                        $[% ttf.commify(cc.debt.total || 0) %]
+                                                                                </div>
+                                                                        [% END %]
+                                                                </div>
+                                                                [% IF cc.is_client && cc.active && !cc.membership.is_free_membership %]
+                                                                        [% UNLESS cc.membership.is_visits_membership && ( !cc.visits.charge_id || cc.visits.is_cancelled ) %]
+                                                                                <div style="position:absolute;bottom:0;right:15px;width:98%;margin-bottom:1rem;margin-right:10px">
+                                                                                        <div class="clearfix">
+                                                                                                <div class="float-left small">
+                                                                                                        [% cc.debt.membership.display_days %]
+                                                                                                </div>
+                                                                                                <div class="float-right small">
+                                                                                                        <small class="text-muted">[% cc.debt.membership.display_next %]</small>
+                                                                                                </div>
+                                                                                        </div>
+                                                                                        <div class="progress progress-xs">
+                                                                                                <div class="progress-bar [% cc.debt.membership.progress_color_class %]"
+                                                                                                        role="progressbar"
+                                                                                                        style="background:red;width:[% cc.debt.membership.progress_pct %]%"
+                                                                                                        aria-valuenow="[% IF cc.debt.membership.expired %]0[% ELSE %]cc.debt.membership.days %][% END %]"
+                                                                                                        aria-valuemin="0"
+                                                                                                        aria-valuemax="[% cc.debt.membership.progress_max_days %]">
+                                                                                                </div>
+                                                                                        </div>
+                                                                                </div>
+                                                                        [% END %]
+                                                                [% END %]
+                                                        </td>
+                                                </tr>
+                                        [% END %]
+                                </tbody>
+                        </table>
+                </div>
+        </div>
+</div>
+
+[% INCLUDE include/footer.tt %]

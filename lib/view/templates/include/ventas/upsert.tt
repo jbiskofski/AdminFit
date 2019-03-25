@@ -1,0 +1,171 @@
+<script>
+require(['jquery'], function($) {
+        $(document).ready( function() {
+                $("select[name=type_code]").change( function() {
+                        $(".DIV-INVENTORY-TYPES").hide();
+                        $("#DIV-INVENTORY").hide();
+                        $("#DIV-VISITS-OPTIONS").hide();
+                        $(".INPUT-ADDITIONAL-DETAIL").attr("disabled",true).attr("readonly", true).addClass("SX-SKIP");
+                        $("#DIV-INVENTORY-TYPE-" + this.value + " .INPUT-ADDITIONAL-DETAIL").removeAttr("disabled").removeAttr("readonly").removeClass("SX-SKIP");
+                        $("#DIV-INVENTORY-TYPE-" + this.value).fadeIn("slow");
+                        if ( this.value !== 'SERVICES' && this.value !== 'ENROLLMENTS' && this.value !== 'VISITS' ) {
+                                $("#DIV-INVENTORY").fadeIn("slow");
+                        }
+                        if ( this.value === 'VISITS' ) {
+                                $("#DIV-VISITS-OPTIONS").fadeIn("slow");
+                        }
+                });
+                $( "input[name='name']" ).focusout( function() {
+                        var INPUT = this;
+                        $(INPUT).hide().show();
+                        var NAME = $(INPUT).val();
+                        if ( !NAME.length ) return;
+                        var URI = "[% ttf.uri( c => 'ventas', m => 'x_check_name_availability' ) %]?name=" + NAME;
+                        $.getJSON(URI, function(RESPONSE) {
+                                if ( RESPONSE.available === 1 ) {
+                                        __ADMINFIT__.display_success('Nombre de producto disponible.', INPUT);
+                                }
+                                else {
+                                        __ADMINFIT__.display_error('Nombre de producto indisponible.', INPUT);
+                                }
+                        });
+                });
+        });
+});
+</script>
+
+<form class="card" name="default" action="[% ttf.uri( c => 'ventas', m => 'upsert-do' ) %]" method="post">
+        <div class="card-status bg-blue"></div>
+        <div class="card-header">
+                <h3 class="card-title">
+                        [% IF data.product %]
+                                <input type="hidden" name="id" value="[% p.id %]">
+                                [% data.product.name %] &raquo; Actualizar
+                        [% ELSE %]
+                                Agregar producto o servicio
+                        [% END %]
+                </h3>
+        </div>
+        <div class="card-alert alert mb-0" id="FORM-STATUS-default" style="display:none"></div>
+        <div class="card-body" style="min-height:405px">
+                <div class="row">
+                        <div class="col-sm-5" style="margin-top:0px">
+                                <div class="form-group">
+                                        <label class="form-label">Tipo</label>
+                                        <select name="type_code" class="form-control custom-select" [% ttf.disabled(data.product.is_permanent) %]>
+                                                <option value=""></option>
+                                                <option value="VISITS" [% ttf.selected(data.product.type_code == 'VISITS') %]>Paquete de visitas</option>
+                                                <option value="FOOD" [% ttf.selected(data.product.type_code == 'FOOD') %]>Bebidas y alimentos</option>
+                                                <option value="SUPPLEMENTS" [% ttf.selected(data.product.type_code == 'SUPPLEMENTS') %]>Suplementos</option>
+                                                <option value="CLOTHING" [% ttf.selected(data.product.type_code == 'CLOTHING') %]>Ropa</option>
+                                                <option value="SHOES" [% ttf.selected(data.product.type_code == 'SHOES') %]>Tenis</option>
+                                                <option value="EQUIPMENT" [% ttf.selected(data.product.type_code == 'EQUIPMENT') %]>Equipo</option>
+                                                <option value="SERVICES" [% ttf.selected(data.product.type_code == 'SERVICES') %]>Servicios</option>
+                                                <option value="ENROLLMENTS" [% ttf.selected(data.product.type_code == 'ENROLLMENTS') %]>Inscripciones</option>
+                                                <option value="OTHER" [% ttf.selected(data.product.type_code == 'OTHER') %]>Otros</option>
+                                        </select>
+                                </div>
+                                <div class="form-group">
+                                        <label class="form-label">Nombre</label>
+                                        <div class="input-group">
+                                                <input type="text" name="name" class="form-control" value="[% data.product.name %]" [% ttf.disabled(data.product.is_permanent) %]>
+                                        </div>
+                                </div>
+                                <div class="form-group">
+                                        <label class="form-label">Precio</label>
+                                        <div class="input-group">
+                                                <span class="input-group-prepend">
+                                                        <span class="input-group-text">$</span>
+                                                </span>
+                                                <input type="text" name="amount" class="form-control text-right" data-mask="000,000,000.00" data-mask-reverse="true" maxlength="8" placeholder="$1,000.00" value="[% data.product.amount %]" [% ttf.disabled(data.product.is_permanent) %]>
+                                        </div>
+                                </div>
+                                <div id="DIV-INVENTORY"
+                                        [% IF !data.product
+                                                || data.product.type_code == 'SERVICES'
+                                                || data.product.type_code == 'VISITS'
+                                                || data.product.type_code == 'ENROLLMENTS' %]style="display:none"[% END %] class="form-group">
+                                        <label class="custom-switch">
+                                                <input type="checkbox" name="BOOL-use_inventory" [% ttf.checked(data.product.use_inventory) %] [% ttf.disabled(data.product.is_permanent) %] class="custom-switch-input">
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Administrar inventario</span>
+                                        </label>
+                                        <small class="d-block item-except text-sm text-muted h-1x">
+                                                <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                                Llevar el control de disponibilidad del producto.
+                                        </small>
+                                </div>
+                        </div>
+                        <div class="col-sm-7">
+                                <fieldset class="form-fieldset" id="DIV-VISITS-OPTIONS" [% UNLESS data.product.type_code == 'VISITS' %]style="display:none"[% END %]>
+                                        <div class="form-group">
+                                                <label class="form-label">N&uacute;mero de visitas</label>
+                                                <input type="number" name="visit_number" class="form-control" min="1" max="999" step"1"="" value="[% data.product.visit_number || 1 %]" autocomplete="off" maxlength="3">
+                                                <br>
+                                                <div class="row">
+                                                        <div class="col-sm-6">
+                                                                <label class="form-label">Expiraci&oacute;n dentro de</label>
+                                                                <input type="number" name="expiration_number" class="form-control" min="1" max="12" step"1"="" value="[% data.product.expiration_number || 1 %]" autocomplete="off" maxlength="2">
+                                                        </div>
+                                                        <div class="col-sm-6">
+                                                                <label class="form-label">
+                                                                        Dias, semanas o meses
+                                                                        [% ttf.tip('La fecha exacta de expiraci&oacute;n se puede establecer al momento de vender el paquete de visitas.') %]
+                                                                </label>
+                                                                <select name="expiration_unit" class="form-control custom-select">
+                                                                        <option value="D" [% ttf.selected( data.product.type_code == 'VISITS' && data.product.expiration_unit == 'D') %]>D&iacute;as</option>
+                                                                        <option value="W" [% ttf.selected( data.product.type_code == 'VISITS' && data.product.expiration_unit == 'W') %]>Semanas</option>
+                                                                        <option value="M" [% ttf.selected( data.product.type_code == 'VISITS' && data.product.expiration_unit == 'M') %]>Meses</option>
+                                                                </select>
+                                                        </div>
+                                                </div>
+                                        </div>
+                                </fieldset>
+                                [% IF data.inventory_type_details %]
+                                        [% FOREACH type = data.inventory_type_details.keys %]
+                                                <fieldset class="form-fieldset DIV-INVENTORY-TYPES" [% UNLESS type == data.product.type_code %]style="display:none"[% END %] id="DIV-INVENTORY-TYPE-[% type %]">
+                                                        [% INCLUDE 'include/additional-details-inputs.tt' DETAILS=data.inventory_type_details.${type} VALUES=data.product.data SXSKIP=(type != data.product.type_code) %]
+                                                </fieldset>
+                                        [% END %]
+                                [% ELSE %]
+                                        <div class="alert alert-info" role="alert">
+                                                <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                                <b>No has configurado detalles adicionales.</b>
+                                                <br><br>
+                                                Estos sirven para llevar el control acerca de otros detalles de tus productos
+                                                como : Marca, talla, sabor, etc.
+                                                <br><br>
+                                                <a href="[% ttf.uri( c => 'configuracion', m => 'detalles-adicionales' ) %]" class="btn btn-primary btn-sm">
+                                                        <i class="fe fe-settings mr-2"></i>
+                                                        Configurar ahora
+                                                </a>
+                                        </div>
+                                [% END %]
+                        </div>
+                </div>
+        </div>
+        <div class="card-footer text-right">
+                <div class="d-flex">
+                        [% IF data.product && !data.product.is_permanent %]
+                                <label class="custom-switch">
+                                        <input type="checkbox"
+                                        data-switch_uri="[% ttf.uri( c => 'ventas', m => 'switch-active-do', id => p.id ) %]"
+                                        class="ACTIVE-SWITCH custom-switch-input"
+                                        [% ttf.checked(data.product.active ) %]>
+                                        <span class="custom-switch-indicator"></span>
+                                        <span class="custom-switch-description">
+                                                [% IF data.product.active %]
+                                                        Deshabilitar
+                                                [% ELSE %]
+                                                        Reactivar
+                                                [% END %]
+                                        </span>
+                                </label>
+                        [% END %]
+                        <button type="submit" class="btn btn-primary ml-auto" [% ttf.disabled(data.product.is_permanent) %]>
+                                [% IF data.product %]Guardar[% ELSE %]Agregar[% END %]
+                        </button>
+                </div>
+        </div>
+</form>
+[% v.pre %]

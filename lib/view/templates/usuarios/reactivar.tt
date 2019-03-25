@@ -1,0 +1,33 @@
+[% INCLUDE include/header/main.tt %]
+
+[% IF !data.user.active %]
+        [% IF data.user.is_client %]
+                <div class="alert alert-success col-sm-12" role="alert">
+                        <i class="fe fe-plus-circle mr-2" aria-hidden="true"></i>
+                        <b>Reactivar cliente</b>
+                        <br>
+                        Al reactivar un cliente se reactivar&aacute; el cargo autom&aacute;tico de su membres&iacute;a.
+                </div>
+                <form name="default" method="post" action="[% ttf.uri( c => 'clientes', m => 'upsert-do' ) %]">
+                        <input type="hidden" name="id" value="[% p.id %]">
+                        <input type="hidden" name="BOOL-reactivate" value="1">
+                        [% INCLUDE 'include/membresias/client-upsert.tt', IS_INSERT => 1, IS_RENEWAL => 1 %]
+                </form>
+                [% v.pre %]
+        [% ELSE %]
+                <div class="alert alert-success col-sm-12" role="alert">
+                        <i class="fe fe-plus-circle mr-2" aria-hidden="true"></i>
+                        <b>Reactivar miembro de staff</b>
+                        <br>
+                        Al reactivar un miembro de staff, el usuario podra de nuevo ingresar al sistema y hacer movimientos.
+                        <br>
+                        <br>
+                        <a href="[% ttf.uri( c => 'configuracion', m => 'reactivar-staff-do', id => p.id ) %]" class="btn btn-success pull-right">
+                                <i class="fe fe-plus-circle mr-2"></i>
+                                Reactivar miembro de staff
+                        </a>
+                </div>
+        [% END %]
+[% END %]
+
+[% INCLUDE include/footer.tt %]

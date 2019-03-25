@@ -1,0 +1,203 @@
+<script>
+require(['jquery'], function($) {
+        $(document).ready( function() {
+
+                $( "input[name='type_code']" ).change( function() {
+                        if ( $(this).val() === 'M' ) {
+                                $('.DIV-MEMBERSHIP-OPTIONS').show();
+                        }
+                        else {
+                                $('.DIV-MEMBERSHIP-OPTIONS').hide();
+                                $('#DIV-SPECIFIC-OPTIONS').hide();
+                                $("input[name=requirement_type_code]").filter("[value=A]").prop("checked", true);
+                        }
+                });
+
+                $( "input[name='requirement_type_code']" ).change( function() {
+                        if ( $(this).val() === 'S' ) {
+                                $('#DIV-SPECIFIC-OPTIONS').show();
+                        }
+                        else {
+                                $('#DIV-SPECIFIC-OPTIONS').hide();
+                        }
+                });
+
+                $( "input[name='name']" ).focusout( function() {
+                        var INPUT = this;
+                        $(INPUT).hide().show();
+                        var NAME = $(INPUT).val();
+                        if ( !NAME.length ) return;
+                        var URI = "[% ttf.uri( c => 'descuentos', m => 'x_check_name_availability' ) %]?name=" + NAME;
+                        $.getJSON(URI, function(RESPONSE) {
+                                if ( RESPONSE.available === 1 ) {
+                                        __ADMINFIT__.display_success('Nombre de descuento disponible.', INPUT);
+                                }
+                                else {
+                                        __ADMINFIT__.display_error('Nombre de descuento indisponible.', INPUT);
+                                }
+                        });
+                });
+
+                $("#SLIDER-DISCOUNT-MONTH-DURATION").change( function() {
+                        $("input[name='discount_month_duration']").val( this.value )
+                });
+
+        });
+});
+
+function check_membership_options() {
+        if ( $("input[name='requirement_type_code']:checked").val() === 'A' ) return true;
+        if ( parseInt( $(".selectgroup-input[name^='BOOL-MM-']:checked").size() ) > 0 ) return true;
+        return false;
+}
+
+</script>
+
+<div class="col">
+        <form class="card" name="default" action="[% ttf.uri( c => 'descuentos', m => 'upsert-do' ) %]" method="post">
+                <div class="card-status bg-blue"></div>
+                <div class="card-header">
+                        <h3 class="card-title">
+                                [% IF data.discount %]
+                                        <input type="hidden" name="id" value="[% p.id %]">
+                                        [% data.discount.name %] &raquo; Actualizar
+                                [% ELSE %]
+                                        Agregar descuento
+                                [% END %]
+                        </h3>
+                </div>
+                <div class="card-alert alert mb-0" id="FORM-STATUS-default" style="display:none"></div>
+                <div class="card-body">
+                        <div class="row">
+                                <div class="col-sm-4">
+                                        <div class="form-group">
+                                                <label class="form-label">Tipo de descuento</label>
+                                                <div class="selectgroup w-100">
+                                                        <label class="selectgroup-item">
+                                                                <input [% ttf.disabled(data.discount.is_permanent) %] type="radio" name="type_code" value="G" class="selectgroup-input" [% ttf.checked( !data.discount || data.discount.type_code == 'G' ) %]>
+                                                                <span class="selectgroup-button">General</span>
+                                                        </label>
+                                                        <label class="selectgroup-item">
+                                                                <input [% ttf.disabled(data.discount.is_permanent) %] type="radio" name="type_code" value="M" class="selectgroup-input" [% ttf.checked(data.discount.type_code == 'M') %]>
+                                                                <span class="selectgroup-button">Membres&iacute;as</span>
+                                                        </label>
+                                                </div>
+                                        </div>
+                                </div>
+                                <div class="col-sm-4">
+                                        <div class="form-group">
+                                                <label class="form-label">Nombre</label>
+                                                <input [% ttf.disabled(data.discount.is_permanent) %] type="text" name="name" class="form-control" placeholder="Nombre de descuento" value="[% data.discount.name %]">
+                                        </div>
+                                </div>
+                                <div class="col-sm-4">
+                                        <div class="form-group">
+                                                <label class="form-label">Descuento</label>
+                                                <div class="input-group">
+                                                        <span class="input-group-prepend">
+                                                                <span class="input-group-text">-$</span>
+                                                        </span>
+                                                        <input [% ttf.disabled(data.discount.is_permanent) %] type="text" name="amount" class="form-control text-right" data-mask="000,000,000.00" data-mask-reverse="true" maxlength="8" placeholder="$100.00" value="[% data.discount.amount %]">
+                                                </div>
+                                                <small class="d-block item-except text-sm text-muted h-1x text-right">
+                                                        Esta cantidad ser&aacute; DESCONTADA.
+                                                        [% ttf.tip('Ejemplo.<br><br> Membres&iacute;a : <b>$1,000</b><br>Descuento : <b>$100</b><br>Meses : <b>3</b><br><br>Resultado : Se le har&aacute;n <b>3</b> cobros de <b>$900</b> al cliente.', align => 'left') %]
+                                                </small>
+                                        </div>
+                                </div>
+                                <div class="col-sm-4">
+                                        <div class="form-group">
+                                             <div class="DIV-MEMBERSHIP-OPTIONS" [% UNLESS data.discount.type_code == 'M' %]style="display:none"[% END %]>
+                                                     <label class="form-label">Membres&iacute;as participantes</label>
+                                                     <div class="selectgroup w-100">
+                                                             <label class="selectgroup-item">
+                                                                     <input [% ttf.disabled(data.discount.is_permanent) %] type="radio" name="requirement_type_code" value="A" class="selectgroup-input" [% ttf.checked( !data.discount || data.discount.requirement_type_code == 'A' || data.discount.requirement_type_code == 'G' ) %]>
+                                                                     <span class="selectgroup-button">Todas</span>
+                                                             </label>
+                                                             <label class="selectgroup-item">
+                                                                     <input [% ttf.disabled(data.discount.is_permanent) %] type="radio" name="requirement_type_code" value="S" class="selectgroup-input" [% ttf.checked(data.discount.requirement_type_code == 'S') %]>
+                                                                     <span class="selectgroup-button">Especificar cuales</span>
+                                                             </label>
+                                                     </div>
+                                             </div>
+                                        </div>
+                                </div>
+                                <div class="col-sm-8">
+                                        <div class="DIV-MEMBERSHIP-OPTIONS form-group" [% UNLESS data.discount.type_code == 'M' %]style="display:none"[% END %]>
+                                                <label class="form-label">Meses</label>
+                                                <div class="row align-items-center">
+                                                        <div class="col">
+                                                                <input [% ttf.disabled(data.discount.is_permanent) %] type="range" id="SLIDER-DISCOUNT-MONTH-DURATION" class="form-control custom-range" step="1" min="1" max="12" value="[% data.discount.discount_month_duration || 1 %]">
+                                                        </div>
+                                                        <div class="col-auto">
+                                                                <input [% ttf.disabled(data.discount.is_permanent) %] type="number" name="discount_month_duration" class="form-control w-8" value="[% data.discount.discount_month_duration || 1 %]" readonly="readonly">
+                                                        </div>
+                                                </div>
+                                        </div>
+                                </div>
+                                <div id="DIV-SPECIFIC-OPTIONS" class="col-sm-12" [% IF !data.discount || data.discount.requirement_type_code == 'A' || data.discount.requirement_type_code == 'G' %]style="display:none"[% END %]>
+                                        <div class="form-group">
+                                                <label class="form-label">
+                                                        Membres&iacute;as
+                                                        <span class="text-red">*</span>
+                                                </label>
+                                                [% IF data.memberships %]
+                                                        <div class="selectgroup selectgroup-pills">
+                                                                [% FOREACH mm = data.memberships %]
+                                                                        <label class="selectgroup-item">
+                                                                                <input [% ttf.disabled(data.discount.is_permanent) %] type="checkbox" name="BOOL-MM-[% mm.id %]" class="selectgroup-input" [% ttf.checked(data.discount.membership_ids.${mm.id}) %]>
+                                                                                <span class="selectgroup-button">[% mm.name %]</span>
+                                                                        </label>
+                                                                [% END %]
+                                                        </div>
+                                                [% ELSE %]
+                                                        <div class="alert alert-info" role="alert">
+                                                                <i class="fe fe-alert-circle mr-2" aria-hidden="true"></i>
+                                                                <b>No se han agregado membres&iacute;as.</b>
+                                                                <br>
+                                                                Te recomendamos empezar por agregar membres&iacute;as, para poder configurar descuentos con opciones mas avanzadas.
+                                                                <br><br>
+                                                                <a href="[% ttf.uri( c => 'membresias', m => 'default' ) %]" class="btn btn-primary btn-sm">
+                                                                        <i class="fe fe-repeat mr-2"></i>
+                                                                        Tipos de membres&iacute;a
+                                                                </a>
+                                                        </div>
+                                                [% END %]
+                                        </div>
+                                </div>
+                                <div class="col-sm-6">
+                                        <div class="form-group">
+                                                <label class="form-label">Notas</label>
+                                                <div class="input-group">
+                                                        <textarea [% ttf.disabled(data.discount.is_permanent) %]  name="notes" rows="3" class="form-control" placeholder="Notas">[% data.discount.notes %]</textarea>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+                <div class="card-footer text-right">
+                        <div class="d-flex">
+                                [% IF data.discount && !data.discount.is_permanent %]
+                                        <label class="custom-switch">
+                                                <input type="checkbox"
+                                                        data-switch_uri="[% ttf.uri( c => 'descuentos', m => 'switch-active-do', id => p.id ) %]"
+                                                        class="ACTIVE-SWITCH custom-switch-input"
+                                                        [% ttf.checked(data.discount.active ) %]>
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">
+                                                        [% IF data.discount.active %]
+                                                                Deshabilitar
+                                                        [% ELSE %]
+                                                                Reactivar
+                                                        [% END %]
+                                                </span>
+                                        </label>
+                                [% END %]
+                                <button type="submit" [% ttf.disabled(data.discount.is_permanent) %] class="btn btn-primary ml-auto">
+                                        [% IF data.discount %]Guardar[% ELSE %]Agregar[% END %]
+                                </button>
+                        </div>
+                </div>
+        </form>
+        [% v.pre %]
+</div>

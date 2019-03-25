@@ -1,0 +1,96 @@
+<!doctype html>
+
+<!-- BEGIN INCLUDE/HEADER/MAIN -->
+<html lang="es" dir="ltr">
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <meta http-equiv="Content-Language" content="en" />
+        <meta name="msapplication-TileColor" content="#2d89ef">
+        <meta name="theme-color" content="#4188c9">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="HandheldFriendly" content="True">
+        <meta name="MobileOptimized" content="320">
+        [% IF cfg.HAS_SMALL_LOGO %]
+                <link rel="icon" href="[% ttf.s3( id => 'conf/SMALL-LOGO' ) %]" type="image/x-icon"/>
+                <link rel="shortcut icon" type="image/x-icon" href="[% ttf.s3( id => 'conf/SMALL-LOGO' ) %]" />
+        [% END %]
+        <title>admin.fit : [% cfg.CUSTOMER | upper %]</title>
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300i,400,400i,500,500i,600,600i,700,700i&amp;subset=latin-ext">
+        <script src="/share/app/assets/js/require.min.js"></script>
+        <script>
+          requirejs.config({
+              baseUrl: '/share/app/'
+          });
+        </script>
+        <link href="/share/app/assets/css/dashboard.css" rel="stylesheet" />
+        <script src="/share/app/assets/js/dashboard.js"></script>
+        <link href="/share/app/assets/plugins/charts-c3/plugin.css" rel="stylesheet" />
+        <script src="/share/app/assets/plugins/charts-c3/plugin.js"></script>
+        <link href="/share/app/assets/css/daterangepicker.css" rel="stylesheet" />
+        <!--
+                <link href="/share/app/assets/plugins/maps-google/plugin.css" rel="stylesheet" />
+                <script src="/share/app/assets/plugins/maps-google/plugin.js"></script>
+        -->
+        <script src="/share/app/assets/plugins/input-mask/plugin.js"></script>
+        <script>require(['input-mask']);</script>
+</head>
+
+<body class="">
+
+<div class="page">
+        <div class="page-main">
+                <div class="header py-4">
+                        <div class="container">
+                                <div class="d-flex">
+                                        <a class="header-brand" href="[% ttf.uri( c => 'inicio', m => 'default' ) %]">
+                                                [% IF cfg.HAS_MEDIUM_LOGO %]
+                                                        <img src="[% ttf.s3( id => 'conf/MEDIUM-LOGO' ) %]" class="header-brand-img">
+                                                [% END %]
+                                        </a>
+                                        <div class="d-flex order-lg-2 ml-auto"  >
+                                                <a href="[% ttf.uri( c => 'configuracion', m => 'default' ) %]" class="nav-link icon"><i class="fe fe-settings"></i></a>
+                                                [% INCLUDE 'include/header/notifications.tt' %]
+                                                <div class="dropdown">
+                                                        <a href="#" class="nav-link pr-0 leading-none" data-toggle="dropdown">
+                                                                [% ttf.avatar(
+                                                                        id => s.user_id,
+                                                                        has_profile_picture => s.has_profile_picture,
+                                                                        has_picture => s.has_picture,
+                                                                        name => s.display_name ) %]
+                                                                <span class="ml-2 d-none d-lg-block">
+                                                                        <span class="text-default">[% s.username %]</span>
+                                                                        <small class="text-muted d-block mt-1">
+                                                                                [% s.lastname1 %][% IF s.lastname2 %] [% s.lastname2 %][% END %], [% s.name %]
+                                                                        </small>
+                                                                </span>
+                                                        </a>
+                                                        <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
+                                                                <a class="dropdown-item" href="[% ttf.uri( c => 'usuarios', m => 'perfil', id => s.user_id ) %]">
+                                                                        <i class="dropdown-icon fe fe-user"></i> Perfil
+                                                                </a>
+                                                                <a class="dropdown-item" href="[% ttf.uri( c => 'login', m => 'logout-do' ) %]">
+                                                                        <i class="dropdown-icon fe fe-log-out"></i> Finalizar sesi&oacute;n
+                                                                </a>
+                                                        </div>
+                                                </div>
+                                        </div>
+                                        <a href="#" class="header-toggler d-lg-none ml-3 ml-lg-0" data-toggle="collapse" data-target="#headerMenuCollapse">
+                                                <span class="header-toggler-icon"></span>
+                                        </a>
+                                </div>
+                        </div>
+                </div>
+
+                [% INCLUDE include/header/menu.tt %]
+
+                <div class="my-3 my-md-5">
+                        <div class="container">
+                                [% INCLUDE 'include/status-messages.tt' %]
+                                <div class="row">
+
+<!-- END INCLUDE/HEADER/MAIN -->

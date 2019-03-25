@@ -1,0 +1,37 @@
+[% SET NOTIFICATIONS = ttf.get_include_data( user_id => s.user_id ) %]
+
+<!-- BEGIN INCLUDE/HEADER/NOTIFICATIONS -->
+<div class="dropdown d-none d-md-flex">
+
+        <a class="nav-link icon" data-toggle="dropdown">
+                <i class="fe fe-bell"></i>
+                [% IF !NOTIFICATIONS.notification_seen && NOTIFICATIONS.charge_count > 0 %]<span class="nav-unread"></span>[% END %]
+        </a>
+
+        <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
+                [% IF NOTIFICATIONS.charge_count > 0 %]
+                        <a href="[% ttf.uri( c => 'finanzas', m => 'resumen', fecha => ttf.today(), ver => 'renovaciones-de-hoy', 'ok-notificacion' => 1 ) %]" class="dropdown-item d-flex">
+                                <span class="avatar mr-3 align-self-center">
+                                        <i class="fe fe-dollar-sign"></i>
+                                </span>
+                                <div>
+                                        <strong>
+                                                [% NOTIFICATIONS.charge_count || 0 %]
+                                                [% ttf.plural(NOTIFICATIONS.charge_count, 'Renovaci&oacute;n', 'Renovaci&oacute;nes') %]
+                                                de membres&iacute;a
+                                        </strong>
+                                        <div class="small text-muted">[% ttf.today() %]</div>
+                                </div>
+                        </a>
+                [% ELSE %]
+                        <div class="dropdown-item d-flex">
+                                <span class="avatar mr-3 align-self-center">
+                                        <i class="fe fe-check text-green"></i>
+                                </span>
+                                No hay notificaciones pendientes
+                        </div>
+                [% END %]
+        </div>
+
+</div>
+<!-- END INCLUDE/HEADER/NOTIFICAITONS -->

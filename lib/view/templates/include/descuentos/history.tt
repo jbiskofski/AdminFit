@@ -1,0 +1,81 @@
+<div class="col-sm-12">
+        <div class="card">
+                <div class="card-status bg-blue"></div>
+                [% IF data.charts.daily_discounts %]
+                        <div class="card-header">
+                                <h4 class="card-title">Descuentos</h4>
+                        </div>
+                        <div id="DIV-DAILY-DISCOUNT-CHART" style="height:10rem;max-height:160px;position:relative;" class="c3"></div>
+                        [% data.charts.daily_discounts %]
+                [% ELSE %]
+                        <div class="card-header">
+                                <h4 class="card-title">&Uacute;ltimos movimientos</h4>
+                        </div>
+                [% END %]
+                <div class="table-responsive">
+                        <table class="table table-hover table-outline table-vcenter text-nowrap card-table table-sortable">
+                                <thead>
+                                        <tr>
+                                                <th class="w-1"></th>
+                                                <th>Fecha</th>
+                                                <th>Cliente</th>
+                                                <th>Administrador</th>
+                                                <th class="text-right">Descuento</th>
+                                        </tr>
+                                </thead>
+                                <tbody>
+                                        [% SET SHOW_MORE = 0 %]
+                                        [% FOREACH hh = data.history %]
+                                                <tr>
+                                                        <td width="1">
+                                                                [% SET NOTES_COLOR = 'blue' %]
+                                                                [% IF hh.type_code == 'DISCOUNT' %]
+                                                                        [% ttf.tip('Descuento', icon => 'arrow-down') %]
+                                                                [% ELSIF hh.type_code == 'CANCELLED' %]
+                                                                        [% ttf.tip('Cancelaci&oacute;n', icon => 'x', color => 'red') %]
+                                                                        [% NOTES_COLOR = 'red' %]
+                                                                [% END %]
+                                                        </td>
+                                                        <td>
+                                                                [% IF hh.charge_id %]
+                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'cobro', id => hh.charge_id) %]" class="text-inherit no-underline">
+                                                                                [% hh.date_time %]
+                                                                        </a>
+                                                                [% ELSE %]
+                                                                        [% hh.date_time %]
+                                                                [% END %]
+                                                        </td>
+                                                        <td>
+                                                                [% IF hh.client_id %]
+                                                                        <a href="[% ttf.uri( c => 'finanzas', m => 'estado-de-cuenta', id => hh.client_id) %]" class="text-inherit no-underline">
+                                                                                [% hh.client_display_name %]
+                                                                        </a>
+                                                                [% ELSE %]
+                                                                        -
+                                                                [% END %]
+                                                        </td>
+                                                        <td class="text-muted">
+                                                                [% hh.admin_display_name %]
+                                                                [% IF hh.notes %][% ttf.tip(hh.notes, color => NOTES_COLOR) %][% END %]
+                                                        </td>
+                                                        <td class="text-right">$[% ttf.commify(hh.discount_amount) %]</td>
+                                                </tr>
+                                                [% IF TRUNCATE && loop.count >= TRUNCATE %]
+                                                        [% SHOW_MORE =1 %]
+                                                        [% LAST %]
+                                                [% END %]
+                                        [% END %]
+                                </tbody>
+                        </table>
+                </div>
+                [% IF TRUNCATE && SHOW_MORE %]
+                        <div class="card-footer">
+                                <a href="[%ttf.uri( c => 'descuentos', m => 'historial', id => p.id ) %]"
+                                        style="margin-top:10px;margin-bottom:10px"
+                                        class="pull-right btn btn-blue ml-auto">
+                                        Ver movimientos anteriores
+                                </a>
+                        </div>
+                [% END %]
+        </div>
+</div>
